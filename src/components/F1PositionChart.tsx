@@ -27,6 +27,8 @@ type Session = {
   location: string;
   country_name: string;
   circuit_short_name: string;
+  date_end: string;
+  session_type: string;
 };
 
 type PositionResponse = {
@@ -106,25 +108,32 @@ export default function F1PositionChart() {
   useEffect(() => {
     async function fetchSessions() {
       try {
-        // Temporarily fetch directly from OpenF1 API to test
-        const response = await fetch('https://api.openf1.org/v1/sessions?year=2025&session_name=Race');
+        // Fetch all 2025 F1 sessions (includes practice, qualifying, sprint, and race)
+        const response = await fetch('https://api.openf1.org/v1/sessions?year=2025');
         if (!response.ok) throw new Error('Failed to fetch sessions');
         const sessionList = await response.json();
         
+        // Sort sessions by date (most recent first) and take more sessions
+        const sortedSessions = sessionList.sort((a: any, b: any) => 
+          new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
+        );
+        
         // Transform the data to match our expected format
-        const transformedSessions = sessionList.slice(0, 10).map((session: any) => ({
+        const transformedSessions = sortedSessions.slice(0, 20).map((session: any) => ({
           session_key: session.session_key,
           meeting_key: session.meeting_key,
           session_name: session.session_name,
           date_start: session.date_start,
+          date_end: session.date_end,
           location: session.location,
           country_name: session.country_name,
-          circuit_short_name: session.circuit_short_name
+          circuit_short_name: session.circuit_short_name,
+          session_type: session.session_type
         }));
         
         setSessions(transformedSessions);
         
-        // Auto-select the most recent race
+        // Auto-select the most recent session
         if (transformedSessions.length > 0) {
           setSelectedSession(transformedSessions[0]);
         }
@@ -156,7 +165,14 @@ export default function F1PositionChart() {
         console.log(`Fetched ${rawData.length} position records`);
         
         if (rawData.length === 0) {
-          setError('No position data available for this session');
+          const sessionDate = new Date(selectedSession.date_start);
+          const isUpcoming = sessionDate > new Date();
+          
+          if (isUpcoming) {
+            setError(`This session is scheduled for ${sessionDate.toLocaleDateString()} at ${sessionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Position data will be available during or after the session.`);
+          } else {
+            setError('No position data available for this session');
+          }
           return;
         }
         
@@ -286,37 +302,67 @@ export default function F1PositionChart() {
     <div className="w-full space-y-6">
       {/* Session Selector */}
       <div className="bg-gray-900 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-white mb-3">Select F1 Session</h3>
-        <div className="flex flex-wrap gap-2">
-          {sessions.map((session) => (
-            <button
-              key={session.session_key}
-              onClick={() => setSelectedSession(session)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedSession?.session_key === session.session_key
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              <div>{session.circuit_short_name}</div>
-              <div className="text-xs opacity-75">
-                {session.session_name} - {new Date(session.date_start).toLocaleDateString()}
-              </div>
-            </button>
-          ))}
+        <h3 className="text-lg font-semibold text-white mb-3">Select F1 Session (2025 Season)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
+          {sessions.map((session) => {
+            const sessionDate = new Date(session.date_start);
+            const isUpcoming = sessionDate > new Date();
+            const sessionIcon = session.session_type === 'Race' ? '🏁' : 
+                               session.session_type === 'Qualifying' ? '⏱️' : 
+                               session.session_type === 'Practice' ? '🔧' : '📊';
+            
+            return (
+              <button
+                key={session.session_key}
+                onClick={() => setSelectedSession(session)}
+                className={`p-3 rounded-lg text-sm font-medium transition-colors text-left ${
+                  selectedSession?.session_key === session.session_key
+                    ? 'bg-red-600 text-white border border-red-500'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-semibold">
+                  <span>{sessionIcon}</span>
+                  <span>{session.circuit_short_name}</span>
+                </div>
+                <div className="text-xs opacity-75 mt-1">
+                  {session.session_name}
+                </div>
+                <div className="text-xs opacity-60 mt-1">
+                  {sessionDate.toLocaleDateString()} {sessionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+                {isUpcoming && (
+                  <div className="text-xs bg-blue-600 px-2 py-1 rounded mt-2 inline-block">
+                    Upcoming
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
         
         {/* Session Info */}
-        {sessionInfo && (
-          <div className="mt-4 text-sm text-gray-300">
-            <div className="flex flex-wrap gap-4">
-              <span>Records: {sessionInfo.total_records}</span>
-              <span>Drivers: {sessionInfo.drivers.length}</span>
-              {selectedSession && (
-                <span>
+        {sessionInfo && selectedSession && (
+          <div className="mt-4 p-3 bg-gray-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                {new Date(selectedSession.date_start) > new Date() ? (
+                  <span className="text-blue-400 font-bold">📅 SCHEDULED</span>
+                ) : new Date(selectedSession.date_end) > new Date() ? (
+                  <span className="text-green-400 font-bold">● LIVE</span>
+                ) : (
+                  <span className="text-yellow-400 font-bold">✓ COMPLETED</span>
+                )}
+                <span className="ml-4 text-white font-medium">
                   {selectedSession.circuit_short_name} - {selectedSession.session_name}
                 </span>
-              )}
+                <span className="ml-2 text-xs text-gray-400">
+                  ({selectedSession.session_type})
+                </span>
+              </div>
+              <div className="text-sm text-gray-400">
+                {sessionInfo.total_records} records • {sessionInfo.drivers.length} drivers
+              </div>
             </div>
           </div>
         )}

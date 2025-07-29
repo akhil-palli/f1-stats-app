@@ -17,6 +17,8 @@ A comprehensive Formula 1 data visualization and analytics platform built with N
 - **Track Conditions**: Weather data including temperature, humidity, and rainfall status
 - **Auto-Refresh**: Automatic data updates every 10 seconds during race sessions
 - **Driver Statistics**: Comprehensive driver and team information
+- **2025 Season Calendar**: Complete F1 2025 season schedule with all sessions (Practice, Qualifying, Sprint, Race)
+- **Session Status Tracking**: Visual indicators for scheduled, live, and completed sessions
 
 ### 🎨 User Experience
 - **Responsive Design**: Optimized for desktop and mobile viewing
