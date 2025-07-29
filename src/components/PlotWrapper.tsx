@@ -30,8 +30,8 @@ export default function PlotWrapper({ data, layout, config, style }: PlotWrapper
   useEffect(() => {
     if (typeof window !== 'undefined' && plotRef.current) {
       // Dynamically import and use Plotly
-      import('plotly.js-dist').then((Plotly) => {
-        // @ts-ignore
+      import('plotly.js').then((PlotlyModule) => {
+        const Plotly = (PlotlyModule as any).default || PlotlyModule;
         Plotly.newPlot(plotRef.current!, data, layout, config);
       }).catch(console.error);
     }
