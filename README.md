@@ -126,24 +126,6 @@ The application uses the public OpenF1 API and doesn't require API keys for basi
 - **Car Data**: Telemetry including speed, throttle, brake, and gear data
 - **Weather**: Track conditions and meteorological data
 
-## 🚢 Deployment
-
-### Vercel (Recommended)
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Deploy with automatic builds on push
-
-### Other Platforms
-The application can be deployed to any platform that supports Next.js:
-- **Netlify**
-- **AWS Amplify** 
-- **Railway**
-- **DigitalOcean App Platform**
-
-Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
 ## 🛣️ Roadmap
 
 ### Planned Features
@@ -160,27 +142,10 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - **Data Caching**: Improved performance with local data storage
 - **Export Functionality**: Save charts and data for analysis
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Guidelines
-1. Follow TypeScript best practices
-2. Use Tailwind CSS for styling
-3. Ensure components are responsive
-4. Add proper error handling for API calls
-5. Test on multiple screen sizes
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
-
-## 🙏 Acknowledgments
-
-- **[OpenF1](https://openf1.org/)** for providing free access to F1 data
-- **Formula 1** for the amazing sport that inspires this project
-- **Next.js team** for the excellent React framework
-- **Plotly** for powerful data visualization capabilities
+This project is open source.
 
 ## 📞 Support
 
