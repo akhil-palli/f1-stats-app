@@ -305,6 +305,68 @@ export function F1RealDataDashboard() {
         }
 
         setDataStatus("Data loaded successfully!");
+
+        // Add most recent race results if APIs are outdated (manual update based on Formula1.com)
+        const currentDate = new Date();
+        const latestApiRace = raceResults.length > 0 ? new Date(raceResults[raceResults.length - 1].date) : null;
+        
+        // If latest API race is older than July 2025, add recent races manually
+        if (!latestApiRace || latestApiRace < new Date('2025-07-01')) {
+          console.log("Adding latest race results from Formula1.com...");
+          const recentRaces = [
+            {
+              season: "2025",
+              round: "13",
+              raceName: "Belgian Grand Prix",
+              Circuit: {
+                circuitName: "Circuit de Spa-Francorchamps",
+                Location: { locality: "Spa", country: "Belgium" }
+              },
+              date: "2025-07-27T12:00:00",
+              Results: [{
+                position: "1",
+                Driver: { givenName: "Oscar", familyName: "Piastri", code: "PIA" },
+                Constructor: { name: "McLaren" }
+              }]
+            },
+            {
+              season: "2025", 
+              round: "12",
+              raceName: "British Grand Prix",
+              Circuit: {
+                circuitName: "Silverstone Circuit",
+                Location: { locality: "Silverstone", country: "UK" }
+              },
+              date: "2025-07-06T12:00:00",
+              Results: [{
+                position: "1",
+                Driver: { givenName: "Lando", familyName: "Norris", code: "NOR" },
+                Constructor: { name: "McLaren" }
+              }]
+            },
+            {
+              season: "2025",
+              round: "11", 
+              raceName: "Austrian Grand Prix",
+              Circuit: {
+                circuitName: "Red Bull Ring",
+                Location: { locality: "Spielberg", country: "Austria" }
+              },
+              date: "2025-06-29T12:00:00",
+              Results: [{
+                position: "1",
+                Driver: { givenName: "Lando", familyName: "Norris", code: "NOR" },
+                Constructor: { name: "McLaren" }
+              }]
+            }
+          ];
+          
+          // Add recent races to the existing results
+          setRaceResults(prev => [...prev, ...recentRaces]);
+          setDataStatus("Data loaded with latest race updates!");
+        } else {
+          setDataStatus("Data loaded successfully!");
+        }
       } catch (err) {
         console.error('Error fetching F1 data:', err);
         setDataStatus("Error loading data - showing demo");
@@ -372,7 +434,7 @@ export function F1RealDataDashboard() {
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="bg-blue-600">LIVE DATA</Badge>
             <span className="text-sm">
-              Championships from Jolpica-F1 API (Ergast successor) • Sessions from OpenF1 API • {dataStatus}
+              Championships from Jolpica-F1 API • Latest races from Formula1.com • Sessions from OpenF1 API • {dataStatus}
             </span>
           </div>
         </div>
@@ -467,13 +529,16 @@ export function F1RealDataDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {completedRaces.slice(-5).reverse().map((race) => {
+                {completedRaces
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date, newest first
+                  .slice(0, 5) // Take first 5 (most recent)
+                  .map((race) => {
                   const winner = race.Results?.[0];
                   return (
                     <div key={`${race.season}-${race.round}`} className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">{race.raceName}</p>
-                        <p className="text-sm text-gray-400">{new Date(race.date).toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-400">{new Date(race.date + 'T12:00:00').toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
@@ -638,12 +703,14 @@ export function F1RealDataDashboard() {
             Race Results & Calendar
           </CardTitle>
           <CardDescription>
-            Real race results from Jolpica-F1 API (Ergast successor) • Live session data from OpenF1
+            Real race results from Jolpica-F1 API + latest from Formula1.com • Live session data from OpenF1
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {raceResults.map((race) => {
+            {raceResults
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date, newest first
+              .map((race) => {
               const winner = race.Results?.[0];
               const hasResults = race.Results && race.Results.length > 0;
               
