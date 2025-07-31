@@ -313,50 +313,119 @@ export function F1RealDataDashboard() {
         // If latest API race is older than July 2025, add recent races manually
         if (!latestApiRace || latestApiRace < new Date('2025-07-01')) {
           console.log("Adding latest race results from Formula1.com...");
-          const recentRaces = [
+          const recentRaces: ErgastRaceResult[] = [
             {
               season: "2025",
               round: "13",
+              url: "",
               raceName: "Belgian Grand Prix",
               Circuit: {
+                circuitId: "spa",
+                url: "",
                 circuitName: "Circuit de Spa-Francorchamps",
-                Location: { locality: "Spa", country: "Belgium" }
+                Location: { 
+                  lat: "50.4372",
+                  long: "5.9714",
+                  locality: "Spa", 
+                  country: "Belgium" 
+                }
               },
               date: "2025-07-27T12:00:00",
               Results: [{
+                number: "81",
                 position: "1",
-                Driver: { givenName: "Oscar", familyName: "Piastri", code: "PIA" },
-                Constructor: { name: "McLaren" }
+                positionText: "1",
+                points: "25",
+                Driver: { 
+                  driverId: "piastri",
+                  permanentNumber: "81",
+                  code: "PIA",
+                  givenName: "Oscar", 
+                  familyName: "Piastri"
+                },
+                Constructor: { 
+                  constructorId: "mclaren",
+                  name: "McLaren" 
+                },
+                grid: "1",
+                laps: "44",
+                status: "Finished"
               }]
             },
             {
               season: "2025", 
               round: "12",
+              url: "",
               raceName: "British Grand Prix",
               Circuit: {
+                circuitId: "silverstone",
+                url: "",
                 circuitName: "Silverstone Circuit",
-                Location: { locality: "Silverstone", country: "UK" }
+                Location: { 
+                  lat: "52.0786",
+                  long: "-1.0169",
+                  locality: "Silverstone", 
+                  country: "UK" 
+                }
               },
               date: "2025-07-06T12:00:00",
               Results: [{
+                number: "4",
                 position: "1",
-                Driver: { givenName: "Lando", familyName: "Norris", code: "NOR" },
-                Constructor: { name: "McLaren" }
+                positionText: "1",
+                points: "25",
+                Driver: { 
+                  driverId: "norris",
+                  permanentNumber: "4",
+                  code: "NOR",
+                  givenName: "Lando", 
+                  familyName: "Norris"
+                },
+                Constructor: { 
+                  constructorId: "mclaren",
+                  name: "McLaren" 
+                },
+                grid: "1",
+                laps: "52",
+                status: "Finished"
               }]
             },
             {
               season: "2025",
               round: "11", 
+              url: "",
               raceName: "Austrian Grand Prix",
               Circuit: {
+                circuitId: "red_bull_ring",
+                url: "",
                 circuitName: "Red Bull Ring",
-                Location: { locality: "Spielberg", country: "Austria" }
+                Location: { 
+                  lat: "47.2197",
+                  long: "14.7647",
+                  locality: "Spielberg", 
+                  country: "Austria" 
+                }
               },
               date: "2025-06-29T12:00:00",
               Results: [{
+                number: "4",
                 position: "1",
-                Driver: { givenName: "Lando", familyName: "Norris", code: "NOR" },
-                Constructor: { name: "McLaren" }
+                positionText: "1",
+                points: "25",
+                Driver: { 
+                  driverId: "norris",
+                  permanentNumber: "4",
+                  code: "NOR",
+                  givenName: "Lando", 
+                  familyName: "Norris"
+                },
+                Constructor: { 
+                  constructorId: "mclaren",
+                  name: "McLaren" 
+                },
+                grid: "1",
+                laps: "71",
+                status: "Finished"
               }]
             }
           ];
