@@ -930,7 +930,6 @@ export function F1RealDataDashboard() {
                 <Button
                   variant={currentPage === "dashboard" ? "default" : "ghost"}
                   onClick={() => setCurrentPage("dashboard")}
-                  size="sm"
                   className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
                 >
                   Dashboard
@@ -938,7 +937,6 @@ export function F1RealDataDashboard() {
                 <Button
                   variant={currentPage === "standings" ? "default" : "ghost"}
                   onClick={() => setCurrentPage("standings")}
-                  size="sm"
                   className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
                 >
                   Standings
@@ -946,7 +944,6 @@ export function F1RealDataDashboard() {
                 <Button 
                   variant={currentPage === "positions" ? "default" : "ghost"} 
                   onClick={() => setCurrentPage("positions")}
-                  size="sm"
                   className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
                 >
                   Charts
@@ -954,7 +951,6 @@ export function F1RealDataDashboard() {
                 <Button 
                   variant={currentPage === "races" ? "default" : "ghost"} 
                   onClick={() => setCurrentPage("races")}
-                  size="sm"
                   className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
                 >
                   Races
