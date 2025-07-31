@@ -189,11 +189,11 @@ export function F1RealDataDashboard() {
           }
         }
 
-        // Fetch Ergast driver standings (try 2025, fallback to 2024)
+        // Fetch current 2025 driver standings using Jolpica-F1 (Ergast successor)
         setDataStatus("Loading driver championship standings...")
         let driverData = null;
         try {
-          const driverResponse = await fetch('https://ergast.com/api/f1/2025/driverStandings.json', {
+          const driverResponse = await fetch('https://api.jolpi.ca/ergast/f1/2025/driverStandings.json', {
             mode: 'cors',
             headers: {
               'Accept': 'application/json',
@@ -207,12 +207,8 @@ export function F1RealDataDashboard() {
           }
         } catch (e) {
           console.log("2025 data not available, trying 2024...", e);
-        }
-
-        // Fallback to 2024 if 2025 not available
-        if (!driverData) {
           try {
-            const driverResponse = await fetch('https://ergast.com/api/f1/2024/driverStandings.json', {
+            const driverResponse = await fetch('https://api.jolpi.ca/ergast/f1/2024/driverStandings.json', {
               mode: 'cors',
               headers: {
                 'Accept': 'application/json',
@@ -233,11 +229,11 @@ export function F1RealDataDashboard() {
           setDriverStandings(driverData);
         }
 
-        // Fetch Ergast constructor standings
+        // Fetch constructor standings using Jolpica-F1 (Ergast successor)
         setDataStatus("Loading constructor standings...")
         let constructorData = null;
         try {
-          const constructorResponse = await fetch('https://ergast.com/api/f1/2025/constructorStandings.json', {
+          const constructorResponse = await fetch('https://api.jolpi.ca/ergast/f1/2025/constructorStandings.json', {
             mode: 'cors',
             headers: {
               'Accept': 'application/json',
@@ -251,12 +247,8 @@ export function F1RealDataDashboard() {
           }
         } catch (e) {
           console.log("2025 constructor data not available, trying 2024...", e);
-        }
-
-        // Fallback to 2024
-        if (!constructorData) {
           try {
-            const constructorResponse = await fetch('https://ergast.com/api/f1/2024/constructorStandings.json', {
+            const constructorResponse = await fetch('https://api.jolpi.ca/ergast/f1/2024/constructorStandings.json', {
               mode: 'cors',
               headers: {
                 'Accept': 'application/json',
@@ -277,10 +269,10 @@ export function F1RealDataDashboard() {
           setConstructorStandings(constructorData);
         }
 
-        // Fetch recent race results
+        // Fetch recent race results using Jolpica-F1 (Ergast successor)
         setDataStatus("Loading race results...")
         try {
-          const resultsResponse = await fetch('https://ergast.com/api/f1/2025/results.json?limit=100', {
+          const resultsResponse = await fetch('https://api.jolpi.ca/ergast/f1/2025/results.json?limit=100', {
             mode: 'cors',
             headers: {
               'Accept': 'application/json',
@@ -295,7 +287,7 @@ export function F1RealDataDashboard() {
         } catch (e) {
           console.log("2025 results not available, trying 2024...", e);
           try {
-            const resultsResponse = await fetch('https://ergast.com/api/f1/2024/results.json?limit=100', {
+            const resultsResponse = await fetch('https://api.jolpi.ca/ergast/f1/2024/results.json?limit=100', {
               mode: 'cors',
               headers: {
                 'Accept': 'application/json',
@@ -380,7 +372,7 @@ export function F1RealDataDashboard() {
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="bg-blue-600">LIVE DATA</Badge>
             <span className="text-sm">
-              Championships from Ergast API • Sessions from OpenF1 API • {dataStatus}
+              Championships from Jolpica-F1 API (Ergast successor) • Sessions from OpenF1 API • {dataStatus}
             </span>
           </div>
         </div>
@@ -517,7 +509,7 @@ export function F1RealDataDashboard() {
               Driver Championship Standings
             </CardTitle>
             <CardDescription>
-              Real standings from Ergast API • Updated weekly • 
+              Real standings from Jolpica-F1 API (Ergast successor) • Updated regularly • 
               {driverStandings.length > 0 ? " Current season data" : " Loading..."}
             </CardDescription>
           </CardHeader>
@@ -573,7 +565,7 @@ export function F1RealDataDashboard() {
               Constructor Championship Standings
             </CardTitle>
             <CardDescription>
-              Real team standings from Ergast API • Updated weekly
+              Real team standings from Jolpica-F1 API (Ergast successor) • Updated regularly
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -646,7 +638,7 @@ export function F1RealDataDashboard() {
             Race Results & Calendar
           </CardTitle>
           <CardDescription>
-            Real race results from Ergast API • Live session data from OpenF1
+            Real race results from Jolpica-F1 API (Ergast successor) • Live session data from OpenF1
           </CardDescription>
         </CardHeader>
         <CardContent>
