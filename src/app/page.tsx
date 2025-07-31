@@ -1,7 +1,7 @@
 'use client';
 
-import { F1EnhancedDashboard } from '@/components/F1EnhancedDashboard';
+import { F1RealDataDashboard } from '@/components/F1RealDataDashboard';
 
 export default function Home() {
-  return <F1EnhancedDashboard />;
+  return <F1RealDataDashboard />;
 }
