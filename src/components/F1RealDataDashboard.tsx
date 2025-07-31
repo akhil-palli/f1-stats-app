@@ -445,21 +445,69 @@ export function F1RealDataDashboard() {
           setDriverStandings([
             {
               position: "1",
+              positionText: "1",
               points: "400",
-              Driver: { givenName: "Max", familyName: "Verstappen", code: "VER" },
-              Constructors: [{ name: "Red Bull Racing" }]
+              wins: "8",
+              Driver: { 
+                driverId: "max_verstappen",
+                permanentNumber: "1",
+                code: "VER",
+                url: "",
+                givenName: "Max", 
+                familyName: "Verstappen",
+                dateOfBirth: "1997-09-30",
+                nationality: "Dutch"
+              },
+              Constructors: [{ 
+                constructorId: "red_bull",
+                url: "",
+                name: "Red Bull Racing",
+                nationality: "Austrian"
+              }]
             },
             {
-              position: "2", 
+              position: "2",
+              positionText: "2", 
               points: "350",
-              Driver: { givenName: "Lewis", familyName: "Hamilton", code: "HAM" },
-              Constructors: [{ name: "Mercedes" }]
+              wins: "4",
+              Driver: { 
+                driverId: "lewis_hamilton",
+                permanentNumber: "44",
+                code: "HAM",
+                url: "",
+                givenName: "Lewis", 
+                familyName: "Hamilton",
+                dateOfBirth: "1985-01-07",
+                nationality: "British"
+              },
+              Constructors: [{ 
+                constructorId: "mercedes",
+                url: "",
+                name: "Mercedes",
+                nationality: "German"
+              }]
             },
             {
               position: "3",
-              points: "300", 
-              Driver: { givenName: "Charles", familyName: "Leclerc", code: "LEC" },
-              Constructors: [{ name: "Ferrari" }]
+              positionText: "3",
+              points: "300",
+              wins: "2", 
+              Driver: { 
+                driverId: "charles_leclerc",
+                permanentNumber: "16",
+                code: "LEC",
+                url: "",
+                givenName: "Charles", 
+                familyName: "Leclerc",
+                dateOfBirth: "1997-10-16",
+                nationality: "Monégasque"
+              },
+              Constructors: [{ 
+                constructorId: "ferrari",
+                url: "",
+                name: "Ferrari",
+                nationality: "Italian"
+              }]
             }
           ]);
         }
@@ -468,18 +516,39 @@ export function F1RealDataDashboard() {
           setConstructorStandings([
             {
               position: "1",
+              positionText: "1",
               points: "600",
-              Constructor: { name: "Red Bull Racing" }
+              wins: "12",
+              Constructor: { 
+                constructorId: "red_bull",
+                url: "",
+                name: "Red Bull Racing",
+                nationality: "Austrian"
+              }
             },
             {
               position: "2",
-              points: "500", 
-              Constructor: { name: "Mercedes" }
+              positionText: "2",
+              points: "500",
+              wins: "8", 
+              Constructor: { 
+                constructorId: "mercedes",
+                url: "",
+                name: "Mercedes",
+                nationality: "German"
+              }
             },
             {
               position: "3",
+              positionText: "3",
               points: "450",
-              Constructor: { name: "Ferrari" }
+              wins: "6",
+              Constructor: { 
+                constructorId: "ferrari",
+                url: "",
+                name: "Ferrari",
+                nationality: "Italian"
+              }
             }
           ]);
         }
