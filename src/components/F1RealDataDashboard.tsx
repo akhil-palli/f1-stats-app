@@ -909,59 +909,58 @@ export function F1RealDataDashboard() {
     <div className="min-h-screen bg-gray-800 text-white">
       {/* Header */}
       <header className="border-b border-gray-700 bg-gray-900">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="container mx-auto px-3 md:px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
               <div className="flex items-center space-x-2">
-                <Flag className="h-8 w-8 text-red-600" />
-                <h1 className="text-2xl font-bold">F1 Real Data Dashboard</h1>
+                <Flag className="h-6 w-6 md:h-8 md:w-8 text-red-600 flex-shrink-0" />
+                <h1 className="hidden sm:block text-lg md:text-2xl font-bold truncate">F1 Real Data Dashboard</h1>
               </div>
-              <Badge variant="secondary">Live API Data</Badge>
+              <Badge variant="secondary" className="hidden md:inline-flex text-xs">Live API Data</Badge>
             </div>
-            <nav className="hidden md:flex items-center space-x-2">
-              <Button
-                variant={currentPage === "dashboard" ? "default" : "ghost"}
-                onClick={() => setCurrentPage("dashboard")}
-                size="sm"
-              >
-                Dashboard
-              </Button>
-              <Button
-                variant={currentPage === "standings" ? "default" : "ghost"}
-                onClick={() => setCurrentPage("standings")}
-                size="sm"
-              >
-                Standings
-              </Button>
-              <Button 
-                variant={currentPage === "positions" ? "default" : "ghost"} 
-                onClick={() => setCurrentPage("positions")}
-                size="sm"
-              >
-                Charts
-              </Button>
-              <Button 
-                variant={currentPage === "races" ? "default" : "ghost"} 
-                onClick={() => setCurrentPage("races")}
-                size="sm"
-              >
-                Races
-              </Button>
-            </nav>
             
-            {/* Mobile Navigation */}
-            <div className="md:hidden">
-              <select 
-                value={currentPage} 
-                onChange={(e) => setCurrentPage(e.target.value)}
-                className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-white text-sm"
-              >
-                <option value="dashboard">Dashboard</option>
-                <option value="standings">Standings</option>
-                <option value="positions">Charts</option>
-                <option value="races">Races</option>
-              </select>
-            </div>
+            {/* Navigation - Always visible, responsive design */}
+            <nav className="flex items-center flex-shrink-0">
+              <div className="flex items-center space-x-1 md:space-x-2 overflow-x-auto" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+                <style jsx>{`
+                  div::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
+                <Button
+                  variant={currentPage === "dashboard" ? "default" : "ghost"}
+                  onClick={() => setCurrentPage("dashboard")}
+                  size="sm"
+                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant={currentPage === "standings" ? "default" : "ghost"}
+                  onClick={() => setCurrentPage("standings")}
+                  size="sm"
+                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                >
+                  Standings
+                </Button>
+                <Button 
+                  variant={currentPage === "positions" ? "default" : "ghost"} 
+                  onClick={() => setCurrentPage("positions")}
+                  size="sm"
+                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                >
+                  Charts
+                </Button>
+                <Button 
+                  variant={currentPage === "races" ? "default" : "ghost"} 
+                  onClick={() => setCurrentPage("races")}
+                  size="sm"
+                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                >
+                  Races
+                </Button>
+              </div>
+            </nav>
           </div>
         </div>
       </header>
