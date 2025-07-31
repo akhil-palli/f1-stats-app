@@ -371,9 +371,9 @@ export default function F1PositionChart() {
       {/* Chart Container */}
       {data.length > 0 && (
         <div className="bg-gray-900 rounded-lg overflow-hidden">
-          <div className="flex">
+          <div className="flex flex-col lg:flex-row">
             {/* Main Chart */}
-            <div className="flex-1">
+            <div className="flex-1 min-h-0">
               <PlotWrapper
                 data={
                   // Create a trace for each driver
@@ -406,14 +406,12 @@ export default function F1PositionChart() {
                     text: 'F1 POSITION CHART',
                     font: {
                       family: 'Arial, sans-serif',
-                      size: 20,
+                      size: 16,
                       color: '#FFFFFF'
                     },
                     x: 0.02,
                     xanchor: 'left'
                   },
-                  width: 1200,
-                  height: 800,
                   paper_bgcolor: '#1a1a1a',
                   plot_bgcolor: '#1a1a1a',
                   font: {
@@ -455,8 +453,8 @@ export default function F1PositionChart() {
                   },
                   hovermode: 'closest',
                   margin: {
-                    l: 80,
-                    r: 50,
+                    l: 60,
+                    r: 20,
                     t: 60,
                     b: 40
                   },
@@ -472,12 +470,12 @@ export default function F1PositionChart() {
                       showarrow: false,
                       font: {
                         color: '#CCCCCC',
-                        size: 14,
+                        size: 12,
                         family: 'Arial, sans-serif'
                       },
                       xanchor: 'right' as const,
                       yanchor: 'middle' as const,
-                      xshift: -15
+                      xshift: -10
                     }))
                   ]
                 }}
@@ -491,20 +489,25 @@ export default function F1PositionChart() {
                   toImageButtonOptions: {
                     format: 'png',
                     filename: 'f1-position-chart',
-                    height: 800,
-                    width: 1200,
+                    height: 600,
+                    width: 1000,
                     scale: 2
                   },
                   responsive: true
                 }}
-                style={{ width: '100%', height: '800px' }}
+                style={{ 
+                  width: '100%', 
+                  height: '60vh',
+                  minHeight: '400px',
+                  maxHeight: '800px'
+                }}
               />
             </div>
             
-            {/* Driver Legend */}
-            <div className="w-80 p-4 bg-gray-800 border-l border-gray-700">
+            {/* Driver Legend - Responsive sidebar */}
+            <div className="w-full lg:w-80 p-4 bg-gray-800 border-t lg:border-t-0 lg:border-l border-gray-700">
               <h4 className="text-lg font-semibold text-white mb-4">Drivers</h4>
-              <div className="space-y-2 max-h-[760px] overflow-y-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-1 gap-2 max-h-none lg:max-h-[calc(60vh-80px)] lg:overflow-y-auto">
                 {sessionInfo?.drivers.sort().map((driverName) => {
                   const color = F1_TEAM_COLORS[driverName] || '#FFFFFF';
                   // Get current position for this driver (last position in data)
@@ -517,23 +520,23 @@ export default function F1PositionChart() {
                     : '?';
                   
                   return (
-                    <div key={driverName} className="flex items-center gap-3 p-2 rounded bg-gray-900">
+                    <div key={driverName} className="flex items-center gap-2 lg:gap-3 p-2 rounded bg-gray-900">
                       {/* Color indicator */}
                       <div 
-                        className="w-4 h-4 rounded-sm border border-gray-600" 
+                        className="w-3 h-3 lg:w-4 lg:h-4 rounded-sm border border-gray-600" 
                         style={{ backgroundColor: color }}
                       ></div>
                       
                       {/* Driver info */}
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-white">{driverName}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs lg:text-sm font-medium text-white truncate">{driverName}</div>
                         <div className="text-xs text-gray-400">
                           #{driverNumber} • P{currentPosition}
                         </div>
                       </div>
                       
                       {/* Position indicator */}
-                      <div className="text-lg font-bold text-gray-300 min-w-[2rem] text-center">
+                      <div className="text-sm lg:text-lg font-bold text-gray-300 min-w-[1.5rem] lg:min-w-[2rem] text-center">
                         {currentPosition}
                       </div>
                     </div>
