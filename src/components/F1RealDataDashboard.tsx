@@ -568,24 +568,24 @@ export function F1RealDataDashboard() {
     return (
       <div className="space-y-8">
         {/* Data Source Notice */}
-        <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-blue-600">LIVE DATA</Badge>
-            <span className="text-sm">
+        <div className="bg-blue-900/50 border border-blue-700 rounded-lg p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <Badge variant="outline" className="bg-blue-600 w-fit">LIVE DATA</Badge>
+            <span className="text-xs sm:text-sm">
               Championships from Jolpica-F1 API • Latest races from Formula1.com • Sessions from OpenF1 API • {dataStatus}
             </span>
           </div>
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Championship Leader</CardTitle>
               <Trophy className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-lg md:text-2xl font-bold">
                 {leader ? `${leader.Driver.givenName} ${leader.Driver.familyName}` : "Loading..."}
               </div>
               <p className="text-xs text-gray-400">
@@ -600,7 +600,7 @@ export function F1RealDataDashboard() {
               <Calendar className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2025 Active</div>
+              <div className="text-lg md:text-2xl font-bold">2025 Active</div>
               <p className="text-xs text-gray-400">Formula 1 World Championship</p>
             </CardContent>
           </Card>
@@ -611,7 +611,7 @@ export function F1RealDataDashboard() {
               <Flag className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{completedRaces.length}/24</div>
+              <div className="text-lg md:text-2xl font-bold">{completedRaces.length}/24</div>
               <p className="text-xs text-gray-400">2025 Season</p>
             </CardContent>
           </Card>
@@ -622,7 +622,7 @@ export function F1RealDataDashboard() {
               <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-lg md:text-2xl font-bold">
                 {constructorLeader ? constructorLeader.Constructor.name : "Loading..."}
               </div>
               <p className="text-xs text-gray-400">
@@ -633,27 +633,27 @@ export function F1RealDataDashboard() {
         </div>
 
         {/* Quick Standings */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Top 6 Drivers (Real Standings)</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Top 6 Drivers (Real Standings)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {driverStandings.slice(0, 6).map((standing) => (
                   <div key={standing.Driver.driverId} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold">
+                      <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold">
                         {standing.position}
                       </div>
-                      <div>
-                        <p className="font-medium">{standing.Driver.givenName} {standing.Driver.familyName}</p>
-                        <p className="text-sm text-gray-400">{standing.Constructors[0]?.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm md:text-base truncate">{standing.Driver.givenName} {standing.Driver.familyName}</p>
+                        <p className="text-xs md:text-sm text-gray-400 truncate">{standing.Constructors[0]?.name}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">{standing.points}</p>
-                      <p className="text-sm text-gray-400">{standing.wins} wins</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-sm md:text-base">{standing.points}</p>
+                      <p className="text-xs md:text-sm text-gray-400">{standing.wins} wins</p>
                     </div>
                   </div>
                 ))}
@@ -663,10 +663,10 @@ export function F1RealDataDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Race Winners</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Recent Race Winners</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {completedRaces
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date, newest first
                   .slice(0, 5) // Take first 5 (most recent)
@@ -674,12 +674,12 @@ export function F1RealDataDashboard() {
                   const winner = race.Results?.[0];
                   return (
                     <div key={`${race.season}-${race.round}`} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{race.raceName}</p>
-                        <p className="text-sm text-gray-400">{new Date(race.date + 'T12:00:00').toLocaleDateString()}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm md:text-base truncate">{race.raceName}</p>
+                        <p className="text-xs md:text-sm text-gray-400">{new Date(race.date + 'T12:00:00').toLocaleDateString()}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">
+                      <div className="text-right flex-shrink-0 ml-2">
+                        <p className="font-medium text-sm md:text-base truncate">
                           {winner ? `${winner.Driver.givenName} ${winner.Driver.familyName}` : 'TBD'}
                         </p>
                         <Badge variant="outline" className="text-xs">
@@ -922,33 +922,51 @@ export function F1RealDataDashboard() {
               <Button
                 variant={currentPage === "dashboard" ? "default" : "ghost"}
                 onClick={() => setCurrentPage("dashboard")}
+                size="sm"
               >
                 Dashboard
               </Button>
               <Button
                 variant={currentPage === "standings" ? "default" : "ghost"}
                 onClick={() => setCurrentPage("standings")}
+                size="sm"
               >
                 Standings
               </Button>
               <Button 
                 variant={currentPage === "positions" ? "default" : "ghost"} 
                 onClick={() => setCurrentPage("positions")}
+                size="sm"
               >
-                Position Chart
+                Charts
               </Button>
               <Button 
                 variant={currentPage === "races" ? "default" : "ghost"} 
                 onClick={() => setCurrentPage("races")}
+                size="sm"
               >
                 Races
               </Button>
             </nav>
+            
+            {/* Mobile Navigation */}
+            <div className="md:hidden">
+              <select 
+                value={currentPage} 
+                onChange={(e) => setCurrentPage(e.target.value)}
+                className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-white text-sm"
+              >
+                <option value="dashboard">Dashboard</option>
+                <option value="standings">Standings</option>
+                <option value="positions">Charts</option>
+                <option value="races">Races</option>
+              </select>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 md:px-4 py-6 md:py-8">
         {currentPage === "dashboard" && renderDashboard()}
         {currentPage === "standings" && renderStandings()}
         {currentPage === "positions" && renderPositionChart()}
