@@ -8,7 +8,8 @@ export default function Navigation() {
 
   const navItems = [
     { href: '/', label: 'Position Chart', icon: '📊' },
-    { href: '/dashboard', label: 'Live Dashboard', icon: '🏁' }
+    { href: '/dashboard', label: 'Live Dashboard', icon: '🏁' },
+    { href: '/predictor', label: 'ML Predictor', icon: '🤖' }
   ];
 
   return (

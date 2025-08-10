@@ -1,7 +1,11 @@
 import * as React from "react"
 
+// Module-level storage for persisting tab states
+const persistedTabStates = new Map<string, string>()
+
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
   defaultValue: string
+  persistKey?: string // Add a key for persistence
 }
 
 export const TabsContext = React.createContext<{
@@ -12,11 +16,27 @@ export const TabsContext = React.createContext<{
   setValue: () => {}
 })
 
-function Tabs({ defaultValue, children, className = "", ...props }: TabsProps) {
-  const [value, setValue] = React.useState(defaultValue)
+function Tabs({ defaultValue, persistKey, children, className = "", ...props }: TabsProps) {
+  // Get initial value from persistence or use default
+  const getInitialValue = () => {
+    if (persistKey && persistedTabStates.has(persistKey)) {
+      return persistedTabStates.get(persistKey)!
+    }
+    return defaultValue
+  }
+  
+  const [value, setValue] = React.useState(getInitialValue)
+  
+  // Custom setValue that also persists the value
+  const setValueWithPersistence = React.useCallback((newValue: string) => {
+    setValue(newValue)
+    if (persistKey) {
+      persistedTabStates.set(persistKey, newValue)
+    }
+  }, [persistKey])
   
   return (
-    <TabsContext.Provider value={{ value, setValue }}>
+    <TabsContext.Provider value={{ value, setValue: setValueWithPersistence }}>
       <div className={className} {...props}>
         {children}
       </div>
