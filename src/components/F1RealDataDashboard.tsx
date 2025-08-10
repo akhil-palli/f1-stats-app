@@ -146,25 +146,39 @@ type QualifyingDriver = {
   driver_number?: number;
   fastest_lap?: number;
   fallback?: boolean;
+  data_source?: 'real_qualifying' | 'starting_grid' | 'mock';
 };
 
-// F1 team colors mapping (2025 season)
+// F1 team colors mapping (2025 season) - Updated with more name variations
 const F1_TEAM_COLORS: Record<string, string> = {
   "Red Bull Racing": "#3671C6",
-  "McLaren": "#FF8000", 
-  "Ferrari": "#E8002D",
-  "Mercedes": "#27F4D2",
-  "Aston Martin": "#229971",
-  "Alpine": "#0093CC",
-  "Williams": "#64C4FF",
-  "RB F1 Team": "#6692FF",
-  "Kick Sauber": "#52E252",
-  "Haas F1 Team": "#B6BABD",
-  // Legacy team names from Ergast
   "Red Bull": "#3671C6",
+  "McLaren": "#FF8000", 
+  "McLaren F1 Team": "#FF8000",
+  "Ferrari": "#E8002D",
+  "Scuderia Ferrari": "#E8002D",
+  "Mercedes": "#27F4D2",
+  "Mercedes-AMG Petronas F1 Team": "#27F4D2",
+  "Aston Martin": "#229971",
+  "Aston Martin Aramco Cognizant F1 Team": "#229971",
+  "Alpine": "#0093CC",
+  "Alpine F1 Team": "#0093CC",
+  "Williams": "#64C4FF",
+  "Williams Racing": "#64C4FF",
+  "RB F1 Team": "#6692FF",
+  "RB": "#6692FF",
+  "VCARB": "#6692FF",
+  "Visa Cash App RB F1 Team": "#6692FF",
+  "Kick Sauber": "#52E252",
+  "Sauber": "#52E252",
+  "Stake F1 Team Kick Sauber": "#52E252",
+  "Haas F1 Team": "#B6BABD",
+  "Haas": "#B6BABD",
+  "MoneyGram Haas F1 Team": "#B6BABD",
+  // Legacy team names from Ergast
   "AlphaTauri": "#6692FF",
   "Alfa Romeo": "#52E252",
-  "Haas": "#B6BABD"
+  "Unknown Team": "#808080"
 };
 
 export function F1RealDataDashboard() {
@@ -1002,52 +1016,223 @@ export function F1RealDataDashboard() {
     </div>
   );
 
-  // ML Predictor functions
+  // ML Predictor functions - Use real qualifying data from OpenF1
   const fetchQualifyingDataForSession = useCallback(async (session: Session) => {
     if (!session) return;
     
     try {
       setIsLoading(true);
       
-      // CORS WORKAROUND: Use realistic mock data instead of API calls
-      console.log('🏁 Using mock qualifying data to avoid CORS issues for:', session.location);
+      console.log('🏁 Fetching REAL qualifying data from OpenF1 for:', session.location);
       
-      const mockQualifyingResults = [
-        { driver_name: "Max Verstappen", constructor: "Red Bull Racing", qualifying_position: 1 },
-        { driver_name: "Lando Norris", constructor: "McLaren", qualifying_position: 2 },
-        { driver_name: "Charles Leclerc", constructor: "Ferrari", qualifying_position: 3 },
-        { driver_name: "Oscar Piastri", constructor: "McLaren", qualifying_position: 4 },
-        { driver_name: "Carlos Sainz", constructor: "Ferrari", qualifying_position: 5 },
-        { driver_name: "Lewis Hamilton", constructor: "Mercedes", qualifying_position: 6 },
-        { driver_name: "George Russell", constructor: "Mercedes", qualifying_position: 7 },
-        { driver_name: "Fernando Alonso", constructor: "Aston Martin", qualifying_position: 8 },
-        { driver_name: "Lance Stroll", constructor: "Aston Martin", qualifying_position: 9 },
-        { driver_name: "Yuki Tsunoda", constructor: "RB F1 Team", qualifying_position: 10 },
-        { driver_name: "Daniel Ricciardo", constructor: "RB F1 Team", qualifying_position: 11 },
-        { driver_name: "Pierre Gasly", constructor: "Alpine", qualifying_position: 12 },
-        { driver_name: "Esteban Ocon", constructor: "Alpine", qualifying_position: 13 },
-        { driver_name: "Alex Albon", constructor: "Williams", qualifying_position: 14 },
-        { driver_name: "Logan Sargeant", constructor: "Williams", qualifying_position: 15 },
-        { driver_name: "Nico Hulkenberg", constructor: "Haas F1 Team", qualifying_position: 16 },
-        { driver_name: "Kevin Magnussen", constructor: "Haas F1 Team", qualifying_position: 17 },
-        { driver_name: "Valtteri Bottas", constructor: "Kick Sauber", qualifying_position: 18 },
-        { driver_name: "Zhou Guanyu", constructor: "Kick Sauber", qualifying_position: 19 },
-        { driver_name: "Sergio Perez", constructor: "Red Bull Racing", qualifying_position: 20 }
-      ];
-
-      setQualifyingData(mockQualifyingResults);
+      // First find the qualifying session for this race weekend
+      const qualifyingSession = sessions.find(s => 
+        s.meeting_key === session.meeting_key && 
+        s.session_name === 'Qualifying'
+      );
+      
+      if (!qualifyingSession) {
+        console.warn('⚠️ No qualifying session found - using race starting grid instead');
+        
+        // Try to get starting grid from the race session itself
+        try {
+          const gridResponse = await fetch(`https://api.openf1.org/v1/position?session_key=${session.session_key}`);
+          if (gridResponse.ok) {
+            const gridData = await gridResponse.json();
+            
+            if (gridData.length > 0) {
+              // Get starting positions (earliest timestamp for each driver)
+              const startingPositions = new Map();
+              
+              gridData.forEach((pos: any) => {
+                const driverKey = pos.driver_number;
+                const currentEntry = startingPositions.get(driverKey);
+                
+                if (!currentEntry || new Date(pos.date) < new Date(currentEntry.date)) {
+                  startingPositions.set(driverKey, pos);
+                }
+              });
+              
+              const gridResults = Array.from(startingPositions.values())
+                .filter((pos: any) => pos.position && pos.position > 0)
+                .sort((a: any, b: any) => a.position - b.position)
+                .map((pos: any) => ({
+                  driver_name: getDriverName(pos.driver_number),
+                  constructor: getConstructorFromDriverName(getDriverName(pos.driver_number)),
+                  qualifying_position: pos.position,
+                  driver_number: pos.driver_number,
+                  data_source: 'starting_grid' as const
+                }));
+              
+              if (gridResults.length > 0) {
+                setQualifyingData(gridResults);
+                setSelectedRaceCircuit(session.circuit_short_name || session.location);
+                console.log('✅ Real starting grid data loaded:', gridResults.length, 'drivers');
+                return;
+              }
+            }
+          }
+        } catch (gridError) {
+          console.warn('Failed to fetch starting grid:', gridError);
+        }
+        
+        // Final fallback to mock data with clear warning
+        console.warn('🚨 USING MOCK QUALIFYING DATA - Real data not available');
+        setQualifyingData(getMockQualifyingData().map(d => ({ ...d, data_source: 'mock' as const })));
+        setSelectedRaceCircuit(session.circuit_short_name || session.location);
+        return;
+      }
+      
+      // Fetch real qualifying positions
+      const qualifyingResponse = await fetch(`https://api.openf1.org/v1/position?session_key=${qualifyingSession.session_key}`);
+      
+      if (!qualifyingResponse.ok) {
+        throw new Error(`Failed to fetch qualifying data: ${qualifyingResponse.status}`);
+      }
+      
+      const qualifyingPositions = await qualifyingResponse.json();
+      console.log(`📊 Found ${qualifyingPositions.length} qualifying position records`);
+      
+      if (qualifyingPositions.length === 0) {
+        throw new Error('No qualifying position data available');
+      }
+      
+      // Get final qualifying positions (latest timestamp for each driver)
+      const finalQualifying = new Map();
+      
+      qualifyingPositions.forEach((pos: any) => {
+        const driverKey = pos.driver_number;
+        const currentEntry = finalQualifying.get(driverKey);
+        
+        if (!currentEntry || new Date(pos.date) > new Date(currentEntry.date)) {
+          finalQualifying.set(driverKey, pos);
+        }
+      });
+      
+      const qualifyingResults = Array.from(finalQualifying.values())
+        .filter((pos: any) => pos.position && pos.position > 0)
+        .sort((a: any, b: any) => a.position - b.position)
+        .map((pos: any) => {
+          const driverName = getDriverName(pos.driver_number);
+          const constructor = getConstructorFromDriverName(driverName);
+          console.log(`Driver #${pos.driver_number}: ${driverName} -> ${constructor}`);
+          return {
+            driver_name: driverName,
+            constructor: constructor,
+            qualifying_position: pos.position,
+            driver_number: pos.driver_number,
+            session_key: qualifyingSession.session_key,
+            data_source: 'real_qualifying' as const
+          };
+        });
+      
+      setQualifyingData(qualifyingResults);
       setSelectedRaceCircuit(session.circuit_short_name || session.location);
       
-      console.log('✅ Mock qualifying data set for:', session.location);
+      console.log('✅ Real qualifying data loaded:', qualifyingResults.length, 'drivers');
       
     } catch (error) {
-      console.error('Error setting qualifying data:', error);
-      // Use default data as ultimate fallback
-      setQualifyingData(qualifyingData.slice(0, 20));
+      console.error('Error fetching real qualifying data:', error);
+      console.warn('🚨 FALLING BACK TO MOCK QUALIFYING DATA');
+      
+      // Use mock data as fallback with clear indication
+      setQualifyingData(getMockQualifyingData().map(d => ({ ...d, data_source: 'mock' as const })));
+      setSelectedRaceCircuit(session.circuit_short_name || session.location);
     } finally {
       setIsLoading(false);
     }
-  }, [qualifyingData]);
+  }, [sessions, drivers]);
+
+  // Helper function for mock data
+  const getMockQualifyingData = () => [
+    { driver_name: "Max Verstappen", constructor: "Red Bull Racing", qualifying_position: 1 },
+    { driver_name: "Lando Norris", constructor: "McLaren", qualifying_position: 2 },
+    { driver_name: "Charles Leclerc", constructor: "Ferrari", qualifying_position: 3 },
+    { driver_name: "Oscar Piastri", constructor: "McLaren", qualifying_position: 4 },
+    { driver_name: "Carlos Sainz", constructor: "Ferrari", qualifying_position: 5 },
+    { driver_name: "Lewis Hamilton", constructor: "Mercedes", qualifying_position: 6 },
+    { driver_name: "George Russell", constructor: "Mercedes", qualifying_position: 7 },
+    { driver_name: "Fernando Alonso", constructor: "Aston Martin", qualifying_position: 8 },
+    { driver_name: "Lance Stroll", constructor: "Aston Martin", qualifying_position: 9 },
+    { driver_name: "Yuki Tsunoda", constructor: "RB F1 Team", qualifying_position: 10 },
+    { driver_name: "Daniel Ricciardo", constructor: "RB F1 Team", qualifying_position: 11 },
+    { driver_name: "Pierre Gasly", constructor: "Alpine", qualifying_position: 12 },
+    { driver_name: "Esteban Ocon", constructor: "Alpine", qualifying_position: 13 },
+    { driver_name: "Alex Albon", constructor: "Williams", qualifying_position: 14 },
+    { driver_name: "Logan Sargeant", constructor: "Williams", qualifying_position: 15 },
+    { driver_name: "Nico Hulkenberg", constructor: "Haas F1 Team", qualifying_position: 16 },
+    { driver_name: "Kevin Magnussen", constructor: "Haas F1 Team", qualifying_position: 17 },
+    { driver_name: "Valtteri Bottas", constructor: "Kick Sauber", qualifying_position: 18 },
+    { driver_name: "Zhou Guanyu", constructor: "Kick Sauber", qualifying_position: 19 },
+    { driver_name: "Sergio Perez", constructor: "Red Bull Racing", qualifying_position: 20 }
+  ];
+
+  // Helper to get constructor from driver name
+  const getConstructorFromDriverName = (driverName: string): string => {
+    console.log(`Looking up constructor for driver: "${driverName}"`);
+    
+    // Normalize the driver name to proper case for lookup
+    const normalizedName = driverName
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    
+    const constructorMap: Record<string, string> = {
+      // Red Bull Racing
+      "Max Verstappen": "Red Bull Racing",
+      "Sergio Perez": "Red Bull Racing", 
+      
+      // McLaren
+      "Lando Norris": "McLaren",
+      "Oscar Piastri": "McLaren",
+      
+      // Ferrari  
+      "Charles Leclerc": "Ferrari",
+      "Carlos Sainz": "Ferrari",
+      
+      // Mercedes (2025: Hamilton + Antonelli)
+      "Lewis Hamilton": "Mercedes",
+      "George Russell": "Mercedes", 
+      "Kimi Antonelli": "Mercedes",
+      
+      // Aston Martin
+      "Fernando Alonso": "Aston Martin",
+      "Lance Stroll": "Aston Martin",
+      
+      // Alpine
+      "Pierre Gasly": "Alpine",
+      "Esteban Ocon": "Alpine",
+      
+      // Williams (2025: Albon + Colapinto)
+      "Alex Albon": "Williams",
+      "Alexander Albon": "Williams",
+      "Logan Sargeant": "Williams",
+      "Franco Colapinto": "Williams",
+      
+      // Haas (2025: Hulkenberg + Bearman)
+      "Nico Hulkenberg": "Haas F1 Team",
+      "Kevin Magnussen": "Haas F1 Team",
+      "Oliver Bearman": "Haas F1 Team",
+      
+      // Kick Sauber (2025: Bottas + Bortoleto)
+      "Valtteri Bottas": "Kick Sauber",
+      "Zhou Guanyu": "Kick Sauber",
+      "Gabriel Bortoleto": "Kick Sauber",
+      
+      // RB F1 Team (2025: Tsunoda + Hadjar)
+      "Yuki Tsunoda": "RB F1 Team",
+      "Liam Lawson": "RB F1 Team",
+      "Isack Hadjar": "RB F1 Team",
+      
+      // Legacy/backup drivers
+      "Daniel Ricciardo": "RB F1 Team"
+    };
+    
+    const result = constructorMap[normalizedName] || "Unknown Team";
+    console.log(`Constructor lookup result: "${driverName}" -> normalized: "${normalizedName}" -> "${result}"`);
+    return result;
+  };
 
   const handleRaceSelection = useCallback(async (session: Session) => {
     setSelectedPredictorSession(session);
@@ -1634,7 +1819,19 @@ export function F1RealDataDashboard() {
                     </div>
                     {qualifyingData.length > 0 && (
                       <div className="text-xs">
-                        {qualifyingData.some(d => d.fallback) ? (
+                        {qualifyingData.some(d => d.data_source === 'mock') ? (
+                          <Badge variant="outline" className="bg-red-900 text-red-300">
+                            🚨 Mock Data (API Issues)
+                          </Badge>
+                        ) : qualifyingData.some(d => d.data_source === 'starting_grid') ? (
+                          <Badge variant="outline" className="bg-blue-900 text-blue-300">
+                            🏁 Real Starting Grid
+                          </Badge>
+                        ) : qualifyingData.some(d => d.data_source === 'real_qualifying') ? (
+                          <Badge variant="outline" className="bg-green-900 text-green-300">
+                            ✅ Real Qualifying Data
+                          </Badge>
+                        ) : qualifyingData.some(d => d.fallback) ? (
                           <Badge variant="outline" className="bg-yellow-900 text-yellow-300">
                             📋 Driver List Order
                           </Badge>
@@ -1686,13 +1883,22 @@ export function F1RealDataDashboard() {
                                   <TableCell className="font-medium">
                                     <div className="flex items-center gap-1">
                                       <span>{driver.qualifying_position}</span>
-                                      {driver.fallback && (
+                                      {driver.data_source === 'mock' && (
+                                        <span className="text-red-400 text-xs" title="Mock data due to API issues">🚨</span>
+                                      )}
+                                      {driver.data_source === 'starting_grid' && (
+                                        <span className="text-blue-400 text-xs" title="Real starting grid position">🏁</span>
+                                      )}
+                                      {driver.data_source === 'real_qualifying' && (
+                                        <span className="text-green-400 text-xs" title="Real qualifying position">✅</span>
+                                      )}
+                                      {driver.fallback && !driver.data_source && (
                                         <span className="text-yellow-400 text-xs" title="Based on driver list order">📋</span>
                                       )}
-                                      {driver.fastest_lap && (
+                                      {driver.fastest_lap && !driver.data_source && (
                                         <span className="text-blue-400 text-xs" title="Based on fastest lap time">⏱️</span>
                                       )}
-                                      {!driver.fallback && !driver.fastest_lap && (
+                                      {!driver.fallback && !driver.fastest_lap && !driver.data_source && (
                                         <span className="text-green-400 text-xs" title="Real grid position">🏁</span>
                                       )}
                                     </div>
@@ -1701,7 +1907,8 @@ export function F1RealDataDashboard() {
                                     <div className="flex items-center gap-2">
                                       <div 
                                         className="w-3 h-3 rounded-full" 
-                                        style={{ backgroundColor: F1_TEAM_COLORS[driver.constructor] || '#FFFFFF' }}
+                                        style={{ backgroundColor: F1_TEAM_COLORS[driver.constructor] || '#808080' }}
+                                        title={`Team: ${driver.constructor} | Color: ${F1_TEAM_COLORS[driver.constructor] || 'Not found'}`}
                                       />
                                       <span className="text-sm">{driver.driver_name.split(' ')[1]}</span>
                                     </div>
