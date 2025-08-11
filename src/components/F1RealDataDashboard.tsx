@@ -2077,8 +2077,8 @@ export function F1RealDataDashboard() {
             </div>
             
             {/* Navigation - Mobile optimized */}
-            <nav className="flex items-center flex-shrink-0 max-w-[60%] sm:max-w-none">
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+            <nav className="flex items-center flex-shrink-0 max-w-[70%] sm:max-w-none">
+              <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide pr-2" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
                 <style jsx>{`
                   .scrollbar-hide::-webkit-scrollbar {
                     display: none;
@@ -2119,7 +2119,7 @@ export function F1RealDataDashboard() {
                 <Button 
                   variant={currentPage === "predictor" ? "default" : "ghost"} 
                   onClick={() => setCurrentPage("predictor")}
-                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
+                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
                 >
                   <Bot className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">ML Predictor</span>
