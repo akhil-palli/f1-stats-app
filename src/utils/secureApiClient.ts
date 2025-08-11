@@ -37,6 +37,14 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
     ? API_CONFIG.PRODUCTION_API_URL 
     : API_CONFIG.DEV_API_URL;
 
+  // Debug logging to see what we're actually sending
+  console.log('🔍 Debug info:', {
+    NODE_ENV: process.env.NODE_ENV,
+    API_URL: apiUrl,
+    API_KEY_LENGTH: API_CONFIG.API_KEY.length,
+    API_KEY_PREFIX: API_CONFIG.API_KEY.substring(0, 8) + '...'
+  });
+
   try {
     const response = await fetch(`${apiUrl}/predict`, {
       method: 'POST',
