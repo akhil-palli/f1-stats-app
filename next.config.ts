@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: {
     unoptimized: true
+  },
+  experimental: {
+    // Suppress hydration warnings for browser extensions
+    optimizePackageImports: ['@/components']
+  },
+  // Additional configuration to handle hydration
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error']
+    } : false
   }
 };
 
