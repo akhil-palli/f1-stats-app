@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react"
-import { Trophy, Flag, Users, TrendingUp, Calendar, MapPin, Car, User, Award, Timer, Target, BarChart3, Brain, Activity, Zap, Settings, Play } from "lucide-react"
+import { Trophy, Flag, Users, TrendingUp, Calendar, MapPin, Car, User, Award, Timer, Target, BarChart3, Brain, Activity, Zap, Settings, Play, LayoutDashboard, Crown, LineChart, CircuitBoard, Bot, Loader } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -202,28 +202,8 @@ export function F1RealDataDashboard() {
     correlation: 0.752
   });
   const [predictions, setPredictions] = useState<PredictionResult[]>([]);
-  const [qualifyingData, setQualifyingData] = useState<QualifyingDriver[]>([
-    { driver_name: "Max Verstappen", constructor: "Red Bull Racing", qualifying_position: 1 },
-    { driver_name: "Lando Norris", constructor: "McLaren", qualifying_position: 2 },
-    { driver_name: "Charles Leclerc", constructor: "Ferrari", qualifying_position: 3 },
-    { driver_name: "Oscar Piastri", constructor: "McLaren", qualifying_position: 4 },
-    { driver_name: "Carlos Sainz", constructor: "Ferrari", qualifying_position: 5 },
-    { driver_name: "Lewis Hamilton", constructor: "Mercedes", qualifying_position: 6 },
-    { driver_name: "George Russell", constructor: "Mercedes", qualifying_position: 7 },
-    { driver_name: "Fernando Alonso", constructor: "Aston Martin", qualifying_position: 8 },
-    { driver_name: "Lance Stroll", constructor: "Aston Martin", qualifying_position: 9 },
-    { driver_name: "Yuki Tsunoda", constructor: "RB F1 Team", qualifying_position: 10 },
-    { driver_name: "Daniel Ricciardo", constructor: "RB F1 Team", qualifying_position: 11 },
-    { driver_name: "Pierre Gasly", constructor: "Alpine", qualifying_position: 12 },
-    { driver_name: "Esteban Ocon", constructor: "Alpine", qualifying_position: 13 },
-    { driver_name: "Alex Albon", constructor: "Williams", qualifying_position: 14 },
-    { driver_name: "Logan Sargeant", constructor: "Williams", qualifying_position: 15 },
-    { driver_name: "Nico Hulkenberg", constructor: "Haas F1 Team", qualifying_position: 16 },
-    { driver_name: "Kevin Magnussen", constructor: "Haas F1 Team", qualifying_position: 17 },
-    { driver_name: "Valtteri Bottas", constructor: "Kick Sauber", qualifying_position: 18 },
-    { driver_name: "Zhou Guanyu", constructor: "Kick Sauber", qualifying_position: 19 },
-    { driver_name: "Nyck de Vries", constructor: "AlphaTauri", qualifying_position: 20 }
-  ]);
+  const [isPredictionsLoading, setIsPredictionsLoading] = useState(false);
+  const [qualifyingData, setQualifyingData] = useState<QualifyingDriver[]>([]);
   const [selectedRaceCircuit, setSelectedRaceCircuit] = useState("Monaco");
   const [selectedPredictorSession, setSelectedPredictorSession] = useState<Session | null>(null);
 
@@ -553,120 +533,7 @@ export function F1RealDataDashboard() {
         }
       } catch (err) {
         console.error('Error fetching F1 data:', err);
-        setDataStatus("Error loading data - showing demo");
-        
-        // Set fallback demo data if APIs fail
-        if (driverStandings.length === 0) {
-          setDriverStandings([
-            {
-              position: "1",
-              positionText: "1",
-              points: "400",
-              wins: "8",
-              Driver: { 
-                driverId: "max_verstappen",
-                permanentNumber: "1",
-                code: "VER",
-                url: "",
-                givenName: "Max", 
-                familyName: "Verstappen",
-                dateOfBirth: "1997-09-30",
-                nationality: "Dutch"
-              },
-              Constructors: [{ 
-                constructorId: "red_bull",
-                url: "",
-                name: "Red Bull Racing",
-                nationality: "Austrian"
-              }]
-            },
-            {
-              position: "2",
-              positionText: "2", 
-              points: "350",
-              wins: "4",
-              Driver: { 
-                driverId: "lewis_hamilton",
-                permanentNumber: "44",
-                code: "HAM",
-                url: "",
-                givenName: "Lewis", 
-                familyName: "Hamilton",
-                dateOfBirth: "1985-01-07",
-                nationality: "British"
-              },
-              Constructors: [{ 
-                constructorId: "mercedes",
-                url: "",
-                name: "Mercedes",
-                nationality: "German"
-              }]
-            },
-            {
-              position: "3",
-              positionText: "3",
-              points: "300",
-              wins: "2", 
-              Driver: { 
-                driverId: "charles_leclerc",
-                permanentNumber: "16",
-                code: "LEC",
-                url: "",
-                givenName: "Charles", 
-                familyName: "Leclerc",
-                dateOfBirth: "1997-10-16",
-                nationality: "Monégasque"
-              },
-              Constructors: [{ 
-                constructorId: "ferrari",
-                url: "",
-                name: "Ferrari",
-                nationality: "Italian"
-              }]
-            }
-          ]);
-        }
-        
-        if (constructorStandings.length === 0) {
-          setConstructorStandings([
-            {
-              position: "1",
-              positionText: "1",
-              points: "600",
-              wins: "12",
-              Constructor: { 
-                constructorId: "red_bull",
-                url: "",
-                name: "Red Bull Racing",
-                nationality: "Austrian"
-              }
-            },
-            {
-              position: "2",
-              positionText: "2",
-              points: "500",
-              wins: "8", 
-              Constructor: { 
-                constructorId: "mercedes",
-                url: "",
-                name: "Mercedes",
-                nationality: "German"
-              }
-            },
-            {
-              position: "3",
-              positionText: "3",
-              points: "450",
-              wins: "6",
-              Constructor: { 
-                constructorId: "ferrari",
-                url: "",
-                name: "Ferrari",
-                nationality: "Italian"
-              }
-            }
-          ]);
-        }
+        setDataStatus("Failed to load F1 data");
       } finally {
         setIsLoading(false);
       }
@@ -1076,9 +943,9 @@ export function F1RealDataDashboard() {
           console.warn('Failed to fetch starting grid:', gridError);
         }
         
-        // Final fallback to mock data with clear warning
-        console.warn('🚨 USING MOCK QUALIFYING DATA - Real data not available');
-        setQualifyingData(getMockQualifyingData().map(d => ({ ...d, data_source: 'mock' as const })));
+        // No fallback data - show error instead
+        console.error('🚨 NO QUALIFYING DATA AVAILABLE - Real data not found');
+        setQualifyingData([]);
         setSelectedRaceCircuit(session.circuit_short_name || session.location);
         return;
       }
@@ -1133,39 +1000,15 @@ export function F1RealDataDashboard() {
       
     } catch (error) {
       console.error('Error fetching real qualifying data:', error);
-      console.warn('🚨 FALLING BACK TO MOCK QUALIFYING DATA');
+      console.error('🚨 FAILED TO LOAD QUALIFYING DATA');
       
-      // Use mock data as fallback with clear indication
-      setQualifyingData(getMockQualifyingData().map(d => ({ ...d, data_source: 'mock' as const })));
+      // No fallback data - clear qualifying data and show error
+      setQualifyingData([]);
       setSelectedRaceCircuit(session.circuit_short_name || session.location);
     } finally {
       setIsLoading(false);
     }
   }, [sessions, drivers]);
-
-  // Helper function for mock data
-  const getMockQualifyingData = () => [
-    { driver_name: "Max Verstappen", constructor: "Red Bull Racing", qualifying_position: 1 },
-    { driver_name: "Lando Norris", constructor: "McLaren", qualifying_position: 2 },
-    { driver_name: "Charles Leclerc", constructor: "Ferrari", qualifying_position: 3 },
-    { driver_name: "Oscar Piastri", constructor: "McLaren", qualifying_position: 4 },
-    { driver_name: "Carlos Sainz", constructor: "Ferrari", qualifying_position: 5 },
-    { driver_name: "Lewis Hamilton", constructor: "Mercedes", qualifying_position: 6 },
-    { driver_name: "George Russell", constructor: "Mercedes", qualifying_position: 7 },
-    { driver_name: "Fernando Alonso", constructor: "Aston Martin", qualifying_position: 8 },
-    { driver_name: "Lance Stroll", constructor: "Aston Martin", qualifying_position: 9 },
-    { driver_name: "Yuki Tsunoda", constructor: "RB F1 Team", qualifying_position: 10 },
-    { driver_name: "Daniel Ricciardo", constructor: "RB F1 Team", qualifying_position: 11 },
-    { driver_name: "Pierre Gasly", constructor: "Alpine", qualifying_position: 12 },
-    { driver_name: "Esteban Ocon", constructor: "Alpine", qualifying_position: 13 },
-    { driver_name: "Alex Albon", constructor: "Williams", qualifying_position: 14 },
-    { driver_name: "Logan Sargeant", constructor: "Williams", qualifying_position: 15 },
-    { driver_name: "Nico Hulkenberg", constructor: "Haas F1 Team", qualifying_position: 16 },
-    { driver_name: "Kevin Magnussen", constructor: "Haas F1 Team", qualifying_position: 17 },
-    { driver_name: "Valtteri Bottas", constructor: "Kick Sauber", qualifying_position: 18 },
-    { driver_name: "Zhou Guanyu", constructor: "Kick Sauber", qualifying_position: 19 },
-    { driver_name: "Sergio Perez", constructor: "Red Bull Racing", qualifying_position: 20 }
-  ];
 
   // Helper to get constructor from driver name
   const getConstructorFromDriverName = (driverName: string): string => {
@@ -1485,6 +1328,7 @@ export function F1RealDataDashboard() {
     }
 
     try {
+      setIsPredictionsLoading(true);
       console.log('🤖 Generating predictions for:', {
         circuit: selectedRaceCircuit,
         session: selectedPredictorSession?.session_name,
@@ -1539,40 +1383,30 @@ export function F1RealDataDashboard() {
               throw new Error('API call failed');
             }
           } catch (error) {
-            console.warn(`API call failed for ${driver.driver_name}, using fallback`);
-            // Fallback to simulated prediction
-            const basePosition = driver.qualifying_position;
-            const variance = Math.random() * 4 - 2;
-            const predictedPos = Math.max(1, Math.min(20, basePosition + variance));
-            
-            return {
-              driver_name: driver.driver_name,
-              constructor: driver.constructor,
-              qualifying_position: driver.qualifying_position,
-              predicted_position: predictedPos,
-              predicted_position_int: Math.round(predictedPos),
-              confidence: driver.qualifying_position <= 3 ? "High" : 
-                         driver.qualifying_position <= 10 ? "Medium" : "Low"
-            };
+            console.warn(`API call failed for ${driver.driver_name}, skipping prediction`);
+            return null; // Return null for failed predictions
           }
         })
       );
       
+      // Filter out failed predictions
+      const validPredictions = predictions.filter(p => p !== null);
+      
       // Sort by predicted position, then by qualifying position as tiebreaker
-      predictions.sort((a, b) => {
+      validPredictions.sort((a, b) => {
         if (a.predicted_position !== b.predicted_position) {
           return a.predicted_position - b.predicted_position;
         }
         // If predicted positions are equal, use qualifying position as tiebreaker
         return a.qualifying_position - b.qualifying_position;
       });
-      setPredictions(predictions);
+      setPredictions(validPredictions);
       
       console.log('✅ Predictions generated:', {
         circuit: selectedRaceCircuit,
-        totalPredictions: predictions.length,
-        apiSuccessful: predictions.filter(p => !p.confidence.includes('fallback')).length,
-        topThree: predictions.slice(0, 3).map(p => ({ 
+        totalPredictions: validPredictions.length,
+        failedPredictions: qualifyingData.length - validPredictions.length,
+        topThree: validPredictions.slice(0, 3).map(p => ({ 
           driver: p.driver_name, 
           predicted: p.predicted_position_int 
         }))
@@ -1581,6 +1415,8 @@ export function F1RealDataDashboard() {
     } catch (error) {
       console.error('Error generating predictions:', error);
       alert('Failed to generate predictions. Check if ML API is running on localhost:8000');
+    } finally {
+      setIsPredictionsLoading(false);
     }
   };
 
@@ -1817,15 +1653,11 @@ export function F1RealDataDashboard() {
                     <div className="text-sm text-gray-400">
                       Session: {selectedPredictorSession.session_name}
                     </div>
-                    {qualifyingData.length > 0 && (
+                    {qualifyingData.length > 0 ? (
                       <div className="text-xs">
-                        {qualifyingData.some(d => d.data_source === 'mock') ? (
-                          <Badge variant="outline" className="bg-red-900 text-red-300">
-                            🚨 Mock Data (API Issues)
-                          </Badge>
-                        ) : qualifyingData.some(d => d.data_source === 'starting_grid') ? (
+                        {qualifyingData.some(d => d.data_source === 'starting_grid') ? (
                           <Badge variant="outline" className="bg-blue-900 text-blue-300">
-                            🏁 Real Starting Grid
+                            <Flag className="w-4 h-4 inline mr-2" />Real Starting Grid
                           </Badge>
                         ) : qualifyingData.some(d => d.data_source === 'real_qualifying') ? (
                           <Badge variant="outline" className="bg-green-900 text-green-300">
@@ -1841,9 +1673,15 @@ export function F1RealDataDashboard() {
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-green-900 text-green-300">
-                            🏁 Real Grid Positions
+                            <Flag className="w-4 h-4 inline mr-2" />Real Grid Positions
                           </Badge>
                         )}
+                      </div>
+                    ) : (
+                      <div className="text-xs">
+                        <Badge variant="outline" className="bg-red-900 text-red-300">
+                          ❌ No Qualifying Data Available
+                        </Badge>
                       </div>
                     )}
                     {isLoading && (
@@ -1859,7 +1697,26 @@ export function F1RealDataDashboard() {
                     </div>
                   )}
                   
-                  {predictions.length > 0 && (
+                  {isPredictionsLoading && (
+                    <div className="text-center py-12">
+                      <div className="flex flex-col items-center gap-4">
+                        <Loader className="w-8 h-8 animate-spin text-blue-500" />
+                        <div className="text-lg font-medium text-gray-700">Generating ML Predictions...</div>
+                        <div className="text-sm text-gray-500">Calling Google Cloud Run API</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {qualifyingData.length > 0 && predictions.length === 0 && !isPredictionsLoading && (
+                    <div className="text-center py-12">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="text-lg font-medium text-red-600">Failed to Generate Predictions</div>
+                        <div className="text-sm text-gray-500">ML API is not responding. Please check if the Google Cloud Run service is available.</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {predictions.length > 0 && !isPredictionsLoading && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
@@ -1883,11 +1740,10 @@ export function F1RealDataDashboard() {
                                   <TableCell className="font-medium">
                                     <div className="flex items-center gap-1">
                                       <span>{driver.qualifying_position}</span>
-                                      {driver.data_source === 'mock' && (
-                                        <span className="text-red-400 text-xs" title="Mock data due to API issues">🚨</span>
-                                      )}
                                       {driver.data_source === 'starting_grid' && (
-                                        <span className="text-blue-400 text-xs" title="Real starting grid position">🏁</span>
+                                        <span title="Real starting grid position">
+                                          <Flag className="text-blue-400 w-3 h-3" />
+                                        </span>
                                       )}
                                       {driver.data_source === 'real_qualifying' && (
                                         <span className="text-green-400 text-xs" title="Real qualifying position">✅</span>
@@ -1899,7 +1755,9 @@ export function F1RealDataDashboard() {
                                         <span className="text-blue-400 text-xs" title="Based on fastest lap time">⏱️</span>
                                       )}
                                       {!driver.fallback && !driver.fastest_lap && !driver.data_source && (
-                                        <span className="text-green-400 text-xs" title="Real grid position">🏁</span>
+                                        <span title="Real grid position">
+                                          <Flag className="text-green-400 w-3 h-3" />
+                                        </span>
                                       )}
                                     </div>
                                   </TableCell>
@@ -1962,7 +1820,7 @@ export function F1RealDataDashboard() {
                                   Q{prediction.qualifying_position} → P{prediction.predicted_position_int}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {prediction.confidence.includes('fallback') ? '⚠️ Fallback' : '🤖 ML'}
+                                  🤖 ML
                                 </div>
                               </div>
                             </div>
@@ -2253,58 +2111,64 @@ export function F1RealDataDashboard() {
     <div className="min-h-screen bg-gray-800 text-white">
       {/* Header */}
       <header className="border-b border-gray-700 bg-gray-900">
-        <div className="container mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
-              <div className="flex items-center space-x-2">
-                <Flag className="h-6 w-6 md:h-8 md:w-8 text-red-600 flex-shrink-0" />
-                <h1 className="hidden sm:block text-lg md:text-2xl font-bold truncate">F1 Real Data Dashboard</h1>
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 min-w-0 flex-shrink">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <Flag className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-600 flex-shrink-0" />
+                <h1 className="hidden xs:block text-sm sm:text-lg md:text-2xl font-bold truncate">F1 Real Data Dashboard</h1>
+                <h1 className="xs:hidden text-sm font-bold">F1 Stats</h1>
               </div>
               <Badge variant="secondary" className="hidden md:inline-flex text-xs">Live API Data</Badge>
             </div>
             
-            {/* Navigation - Always visible, responsive design */}
-            <nav className="flex items-center flex-shrink-0">
-              <div className="flex items-center space-x-1 md:space-x-2 overflow-x-auto" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+            {/* Navigation - Mobile optimized */}
+            <nav className="flex items-center flex-shrink-0 max-w-[60%] sm:max-w-none">
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
                 <style jsx>{`
-                  div::-webkit-scrollbar {
+                  .scrollbar-hide::-webkit-scrollbar {
                     display: none;
                   }
                 `}</style>
                 <Button
                   variant={currentPage === "dashboard" ? "default" : "ghost"}
                   onClick={() => setCurrentPage("dashboard")}
-                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
                 >
-                  Dashboard
+                  <LayoutDashboard className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Button>
                 <Button
                   variant={currentPage === "standings" ? "default" : "ghost"}
                   onClick={() => setCurrentPage("standings")}
-                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
                 >
-                  Standings
+                  <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Standings</span>
                 </Button>
                 <Button 
                   variant={currentPage === "positions" ? "default" : "ghost"} 
                   onClick={() => setCurrentPage("positions")}
-                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
                 >
-                  Charts
+                  <LineChart className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Charts</span>
                 </Button>
                 <Button 
                   variant={currentPage === "races" ? "default" : "ghost"} 
                   onClick={() => setCurrentPage("races")}
-                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
                 >
-                  Races
+                  <CircuitBoard className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Races</span>
                 </Button>
                 <Button 
                   variant={currentPage === "predictor" ? "default" : "ghost"} 
                   onClick={() => setCurrentPage("predictor")}
-                  className="whitespace-nowrap text-xs md:text-sm px-2 md:px-3 h-8"
+                  className="whitespace-nowrap text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 h-7 sm:h-8 min-w-0 flex-shrink-0 flex items-center gap-1"
                 >
-                  🤖 ML Predictor
+                  <Bot className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">ML Predictor</span>
                 </Button>
               </div>
             </nav>
