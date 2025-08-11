@@ -1413,11 +1413,11 @@ export function F1RealDataDashboard() {
       </div>
 
       <Tabs key="ml-predictor-tabs" defaultValue="overview" persistKey="ml-predictor" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="predictor">Live Predictor</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 gap-1">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3">Overview</TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs sm:text-sm px-2 sm:px-3">Performance</TabsTrigger>
+          <TabsTrigger value="predictor" className="text-xs sm:text-sm px-1 sm:px-3">Predictor</TabsTrigger>
+          <TabsTrigger value="insights" className="text-xs sm:text-sm px-2 sm:px-3">Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -2070,7 +2070,7 @@ export function F1RealDataDashboard() {
             <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 min-w-0 flex-shrink">
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <Flag className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-red-600 flex-shrink-0" />
-                <h1 className="hidden xs:block text-sm sm:text-lg md:text-2xl font-bold truncate">F1 Real Data Dashboard</h1>
+                <h1 className="hidden xs:block text-sm sm:text-lg md:text-2xl font-bold truncate">F1 Dashboard</h1>
                 <h1 className="xs:hidden text-sm font-bold">F1 Stats</h1>
               </div>
               <Badge variant="secondary" className="hidden md:inline-flex text-xs">Live API Data</Badge>
