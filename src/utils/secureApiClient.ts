@@ -23,11 +23,11 @@ interface PredictionResult {
 
 const API_CONFIG = {
   // Cloud Run URL - environment variable fixed in GitHub Actions
-  PRODUCTION_API_URL: process.env.REACT_APP_CLOUD_RUN_URL || "https://f1-stats-ml-386425820603.us-east1.run.app",
+  PRODUCTION_API_URL: process.env.NEXT_PUBLIC_CLOUD_RUN_URL || "https://f1-stats-ml-386425820603.us-east1.run.app",
   DEV_API_URL: "http://localhost:8000",
   
   // API key MUST be injected via GitHub Actions during build - NO FALLBACK!
-  API_KEY: process.env.REACT_APP_F1_API_KEY!
+  API_KEY: process.env.NEXT_PUBLIC_F1_API_KEY!
 };
 
 // Secure API client function
@@ -43,7 +43,7 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
     API_KEY_EXISTS: !!API_CONFIG.API_KEY,
     API_KEY_LENGTH: API_CONFIG.API_KEY?.length || 0,
     API_KEY_PREFIX: API_CONFIG.API_KEY?.substring(0, 8) + '...' || 'UNDEFINED',
-    REACT_APP_F1_API_KEY_RAW: process.env.REACT_APP_F1_API_KEY ? 'EXISTS' : 'MISSING'
+    NEXT_PUBLIC_F1_API_KEY_RAW: process.env.NEXT_PUBLIC_F1_API_KEY ? 'EXISTS' : 'MISSING'
   });
 
   // Fail fast if no API key
