@@ -37,7 +37,7 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
     ? API_CONFIG.PRODUCTION_API_URL 
     : API_CONFIG.DEV_API_URL;
 
-  // Debug logging to see what we're actually sending
+  // Debug logging to see what we're actually sending (will be removed after testing)
   console.log('🔍 Debug info:', {
     NODE_ENV: process.env.NODE_ENV,
     API_URL: apiUrl,
