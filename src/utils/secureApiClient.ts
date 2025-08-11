@@ -23,7 +23,7 @@ interface PredictionResult {
 
 const API_CONFIG = {
   // Cloud Run URL (will be public once you deploy)
-  PRODUCTION_API_URL: process.env.REACT_APP_CLOUD_RUN_URL || "https://your-service-url.run.app",
+  PRODUCTION_API_URL: process.env.REACT_APP_CLOUD_RUN_URL || "https://f1-stats-ml-386425820603.us-east1.run.app",
   DEV_API_URL: "http://localhost:8000",
   
   // API key injected via GitHub Actions during build
@@ -81,4 +81,50 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
     console.error('Prediction failed:', error);
     throw error;
   }
+}
+
+// Batch prediction function with concurrency control
+export async function makeBatchPredictions(driversData: DriverData[]): Promise<PredictionResult[]> {
+  const BATCH_SIZE = 8; // Stay under the 10 concurrency limit
+  const DELAY_BETWEEN_BATCHES = 500; // 500ms delay between batches
+  
+  const results: PredictionResult[] = [];
+  const failedDrivers: string[] = [];
+  
+  // Process drivers in batches
+  for (let i = 0; i < driversData.length; i += BATCH_SIZE) {
+    const batch = driversData.slice(i, i + BATCH_SIZE);
+    console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(driversData.length / BATCH_SIZE)}: ${batch.length} drivers`);
+    
+    // Process current batch
+    const batchPromises = batch.map(async (driverData) => {
+      try {
+        const result = await makeSecurePrediction(driverData);
+        return result;
+      } catch (error) {
+        console.warn(`Failed to get prediction for ${driverData.driver_name}`);
+        failedDrivers.push(driverData.driver_name);
+        return null;
+      }
+    });
+    
+    const batchResults = await Promise.all(batchPromises);
+    
+    // Add successful results
+    batchResults.forEach(result => {
+      if (result) results.push(result);
+    });
+    
+    // Add delay between batches (except for the last batch)
+    if (i + BATCH_SIZE < driversData.length) {
+      await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+    }
+  }
+  
+  console.log(`✅ Batch predictions complete: ${results.length} successful, ${failedDrivers.length} failed`);
+  if (failedDrivers.length > 0) {
+    console.warn('Failed drivers:', failedDrivers);
+  }
+  
+  return results;
 }

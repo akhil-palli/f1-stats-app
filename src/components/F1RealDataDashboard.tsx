@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import F1PositionChart from './F1PositionChart'
 import { RaceSelector } from './RaceSelector'
-import { makeSecurePrediction } from '@/utils/secureApiClient'
+import { makeSecurePrediction, makeBatchPredictions } from '@/utils/secureApiClient'
 
 // Types for real API data
 type Session = {
@@ -1337,63 +1337,56 @@ export function F1RealDataDashboard() {
         sampleDriver: qualifyingData[0]
       });
       
-      // Call your ML API here
-      const predictions = await Promise.all(
-        qualifyingData.map(async (driver) => {
-          // Calculate real performance metrics for this driver
-          const driverMetrics = calculateDriverMetrics(driver.driver_name);
-          const constructorMetrics = calculateConstructorMetrics(driver.constructor);
-          
-          const requestData = {
-            driver_name: driver.driver_name,
-            constructor: driver.constructor,
-            circuit: selectedRaceCircuit,
-            qualifying_position: driver.qualifying_position,
-            // Real calculated metrics
-            championship_position: driverMetrics.championship_position,
-            cumulative_points: driverMetrics.cumulative_points,
-            driver_avg_finish_3: driverMetrics.driver_avg_finish_3,
-            driver_avg_quali_3: driverMetrics.driver_avg_quali_3,
-            constructor_avg_finish_3: constructorMetrics.constructor_avg_finish_3,
-            driver_dnf_rate: driverMetrics.driver_dnf_rate,
-          };
-          
-          try {
-            const result = await makeSecurePrediction(requestData);
-            return {
-              driver_name: driver.driver_name,
-              constructor: driver.constructor,
-              qualifying_position: driver.qualifying_position,
-              predicted_position: result.predicted_position,
-              predicted_position_int: Math.round(result.predicted_position),
-              confidence: result.predicted_position <= 3 ? "High" : 
-                         result.predicted_position <= 10 ? "Medium" : "Low"
-            };
-          } catch (error) {
-            console.warn(`API call failed for ${driver.driver_name}, skipping prediction`);
-            return null; // Return null for failed predictions
-          }
-        })
-      );
+      // Prepare all driver data for batch processing
+      const driversData = qualifyingData.map((driver) => {
+        // Calculate real performance metrics for this driver
+        const driverMetrics = calculateDriverMetrics(driver.driver_name);
+        const constructorMetrics = calculateConstructorMetrics(driver.constructor);
+        
+        return {
+          driver_name: driver.driver_name,
+          constructor: driver.constructor,
+          circuit: selectedRaceCircuit,
+          qualifying_position: driver.qualifying_position,
+          // Real calculated metrics
+          championship_position: driverMetrics.championship_position,
+          cumulative_points: driverMetrics.cumulative_points,
+          driver_avg_finish_3: driverMetrics.driver_avg_finish_3,
+          driver_avg_quali_3: driverMetrics.driver_avg_quali_3,
+          constructor_avg_finish_3: constructorMetrics.constructor_avg_finish_3,
+          driver_dnf_rate: driverMetrics.driver_dnf_rate,
+        };
+      });
+
+      // Use batch processing to respect concurrency limits
+      const apiResults = await makeBatchPredictions(driversData);
       
-      // Filter out failed predictions
-      const validPredictions = predictions.filter(p => p !== null);
+      // Convert API results to component format
+      const predictions = apiResults.map(result => ({
+        driver_name: result.driver_name,
+        constructor: driversData.find(d => d.driver_name === result.driver_name)?.constructor || '',
+        qualifying_position: driversData.find(d => d.driver_name === result.driver_name)?.qualifying_position || 0,
+        predicted_position: result.predicted_position,
+        predicted_position_int: Math.round(result.predicted_position),
+        confidence: result.predicted_position <= 3 ? "High" : 
+                   result.predicted_position <= 10 ? "Medium" : "Low"
+      }));
       
       // Sort by predicted position, then by qualifying position as tiebreaker
-      validPredictions.sort((a, b) => {
+      predictions.sort((a, b) => {
         if (a.predicted_position !== b.predicted_position) {
           return a.predicted_position - b.predicted_position;
         }
         // If predicted positions are equal, use qualifying position as tiebreaker
         return a.qualifying_position - b.qualifying_position;
       });
-      setPredictions(validPredictions);
+      setPredictions(predictions);
       
       console.log('✅ Predictions generated:', {
         circuit: selectedRaceCircuit,
-        totalPredictions: validPredictions.length,
-        failedPredictions: qualifyingData.length - validPredictions.length,
-        topThree: validPredictions.slice(0, 3).map(p => ({ 
+        totalPredictions: predictions.length,
+        failedPredictions: qualifyingData.length - predictions.length,
+        topThree: predictions.slice(0, 3).map(p => ({ 
           driver: p.driver_name, 
           predicted: p.predicted_position_int 
         }))
