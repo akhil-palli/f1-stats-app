@@ -36,16 +36,6 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
     ? API_CONFIG.PRODUCTION_API_URL 
     : API_CONFIG.DEV_API_URL;
 
-  // Debug logging to see what we're actually sending (will be removed after testing)
-  console.log('🔍 Debug info [TRY 1]:', {
-    NODE_ENV: process.env.NODE_ENV,
-    API_URL: apiUrl,
-    API_KEY_EXISTS: !!API_CONFIG.API_KEY,
-    API_KEY_LENGTH: API_CONFIG.API_KEY?.length || 0,
-    API_KEY_PREFIX: API_CONFIG.API_KEY?.substring(0, 8) + '...' || 'UNDEFINED',
-    NEXT_PUBLIC_F1_API_KEY_RAW: process.env.NEXT_PUBLIC_F1_API_KEY ? 'EXISTS' : 'MISSING'
-  });
-
   // Fail fast if no API key
   if (!API_CONFIG.API_KEY) {
     throw new Error('API key is missing! Check GitHub Actions environment variable injection.');
@@ -108,7 +98,6 @@ export async function makeBatchPredictions(driversData: DriverData[]): Promise<P
   // Process drivers in batches
   for (let i = 0; i < driversData.length; i += BATCH_SIZE) {
     const batch = driversData.slice(i, i + BATCH_SIZE);
-    console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(driversData.length / BATCH_SIZE)}: ${batch.length} drivers`);
     
     // Process current batch
     const batchPromises = batch.map(async (driverData) => {
@@ -116,7 +105,6 @@ export async function makeBatchPredictions(driversData: DriverData[]): Promise<P
         const result = await makeSecurePrediction(driverData);
         return result;
       } catch (error) {
-        console.warn(`Failed to get prediction for ${driverData.driver_name}`);
         failedDrivers.push(driverData.driver_name);
         return null;
       }
@@ -133,11 +121,6 @@ export async function makeBatchPredictions(driversData: DriverData[]): Promise<P
     if (i + BATCH_SIZE < driversData.length) {
       await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
     }
-  }
-  
-  console.log(`✅ Batch predictions complete: ${results.length} successful, ${failedDrivers.length} failed`);
-  if (failedDrivers.length > 0) {
-    console.warn('Failed drivers:', failedDrivers);
   }
   
   return results;
