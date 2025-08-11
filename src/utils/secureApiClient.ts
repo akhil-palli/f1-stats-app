@@ -22,7 +22,7 @@ interface PredictionResult {
 }
 
 const API_CONFIG = {
-  // Cloud Run URL (will be public once you deploy)
+  // Cloud Run URL - environment variable fixed in GitHub Actions
   PRODUCTION_API_URL: process.env.REACT_APP_CLOUD_RUN_URL || "https://f1-stats-ml-386425820603.us-east1.run.app",
   DEV_API_URL: "http://localhost:8000",
   
