@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import F1PositionChart from './F1PositionChart'
 import { RaceSelector } from './RaceSelector'
+import { makeSecurePrediction } from '@/utils/secureApiClient'
 
 // Types for real API data
 type Session = {
@@ -1344,11 +1345,10 @@ export function F1RealDataDashboard() {
           const constructorMetrics = calculateConstructorMetrics(driver.constructor);
           
           const requestData = {
-            driver: driver.driver_name,
+            driver_name: driver.driver_name,
             constructor: driver.constructor,
             circuit: selectedRaceCircuit,
-            grid_position: driver.qualifying_position,
-            season: 2025,
+            qualifying_position: driver.qualifying_position,
             // Real calculated metrics
             championship_position: driverMetrics.championship_position,
             cumulative_points: driverMetrics.cumulative_points,
@@ -1356,32 +1356,19 @@ export function F1RealDataDashboard() {
             driver_avg_quali_3: driverMetrics.driver_avg_quali_3,
             constructor_avg_finish_3: constructorMetrics.constructor_avg_finish_3,
             driver_dnf_rate: driverMetrics.driver_dnf_rate,
-            grid_penalty: 0 // TODO: Could be enhanced to detect actual penalties
           };
           
           try {
-            const response = await fetch('http://localhost:8000/predict', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(requestData)
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              return {
-                driver_name: driver.driver_name,
-                constructor: driver.constructor,
-                qualifying_position: driver.qualifying_position,
-                predicted_position: result.predicted_position,
-                predicted_position_int: Math.round(result.predicted_position),
-                confidence: result.predicted_position <= 3 ? "High" : 
-                           result.predicted_position <= 10 ? "Medium" : "Low"
-              };
-            } else {
-              throw new Error('API call failed');
-            }
+            const result = await makeSecurePrediction(requestData);
+            return {
+              driver_name: driver.driver_name,
+              constructor: driver.constructor,
+              qualifying_position: driver.qualifying_position,
+              predicted_position: result.predicted_position,
+              predicted_position_int: Math.round(result.predicted_position),
+              confidence: result.predicted_position <= 3 ? "High" : 
+                         result.predicted_position <= 10 ? "Medium" : "Low"
+            };
           } catch (error) {
             console.warn(`API call failed for ${driver.driver_name}, skipping prediction`);
             return null; // Return null for failed predictions
@@ -1414,36 +1401,10 @@ export function F1RealDataDashboard() {
       
     } catch (error) {
       console.error('Error generating predictions:', error);
-      alert('Failed to generate predictions. Check if ML API is running on localhost:8000');
+      alert('Failed to generate predictions. Check if ML API is running on Google Cloud Run');
     } finally {
       setIsPredictionsLoading(false);
     }
-  };
-
-  const generatePredictions_old = () => {
-    const newPredictions: PredictionResult[] = qualifyingData.map(driver => {
-      // Simulate ML prediction with some realistic variance
-      const basePosition = driver.qualifying_position;
-      const variance = Math.random() * 4 - 2; // Random variance of +/- 2 positions
-      const predictedPos = Math.max(1, Math.min(20, basePosition + variance));
-      
-      // Calculate confidence based on qualifying position (pole sitters have higher confidence)
-      const confidence = driver.qualifying_position <= 3 ? "High" : 
-                        driver.qualifying_position <= 10 ? "Medium" : "Low";
-      
-      return {
-        driver_name: driver.driver_name,
-        constructor: driver.constructor,
-        qualifying_position: driver.qualifying_position,
-        predicted_position: predictedPos,
-        predicted_position_int: Math.round(predictedPos),
-        confidence
-      };
-    });
-    
-    // Sort by predicted position
-    newPredictions.sort((a, b) => a.predicted_position - b.predicted_position);
-    setPredictions(newPredictions);
   };
 
   const renderMLPredictor = () => (
