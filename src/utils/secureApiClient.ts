@@ -89,8 +89,9 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
 
 // Batch prediction function with concurrency control
 export async function makeBatchPredictions(driversData: DriverData[]): Promise<PredictionResult[]> {
-  const BATCH_SIZE = 8; // Stay under the 10 concurrency limit
-  const DELAY_BETWEEN_BATCHES = 500; // 500ms delay between batches
+  const BATCH_SIZE = 5; // Reduced batch size for better rate limiting
+  const DELAY_BETWEEN_BATCHES = 800; // Increased delay between batches
+  const DELAY_BETWEEN_REQUESTS = 100; // Small delay between individual requests
   
   const results: PredictionResult[] = [];
   const failedDrivers: string[] = [];
@@ -99,23 +100,20 @@ export async function makeBatchPredictions(driversData: DriverData[]): Promise<P
   for (let i = 0; i < driversData.length; i += BATCH_SIZE) {
     const batch = driversData.slice(i, i + BATCH_SIZE);
     
-    // Process current batch
-    const batchPromises = batch.map(async (driverData) => {
+    // Process current batch with staggered requests
+    for (let j = 0; j < batch.length; j++) {
       try {
-        const result = await makeSecurePrediction(driverData);
-        return result;
+        const result = await makeSecurePrediction(batch[j]);
+        results.push(result);
+        
+        // Small delay between individual requests in the batch
+        if (j < batch.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS));
+        }
       } catch (error) {
-        failedDrivers.push(driverData.driver_name);
-        return null;
+        failedDrivers.push(batch[j].driver_name);
       }
-    });
-    
-    const batchResults = await Promise.all(batchPromises);
-    
-    // Add successful results
-    batchResults.forEach(result => {
-      if (result) results.push(result);
-    });
+    }
     
     // Add delay between batches (except for the last batch)
     if (i + BATCH_SIZE < driversData.length) {
