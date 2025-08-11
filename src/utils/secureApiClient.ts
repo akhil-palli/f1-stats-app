@@ -26,9 +26,8 @@ const API_CONFIG = {
   PRODUCTION_API_URL: process.env.REACT_APP_CLOUD_RUN_URL || "https://f1-stats-ml-386425820603.us-east1.run.app",
   DEV_API_URL: "http://localhost:8000",
   
-  // API key injected via GitHub Actions during build
-  // Never put the real key directly in code!
-  API_KEY: process.env.REACT_APP_F1_API_KEY || "dev-key-for-local-testing"
+  // API key MUST be injected via GitHub Actions during build - NO FALLBACK!
+  API_KEY: process.env.REACT_APP_F1_API_KEY!
 };
 
 // Secure API client function
@@ -41,9 +40,16 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
   console.log('🔍 Debug info:', {
     NODE_ENV: process.env.NODE_ENV,
     API_URL: apiUrl,
-    API_KEY_LENGTH: API_CONFIG.API_KEY.length,
-    API_KEY_PREFIX: API_CONFIG.API_KEY.substring(0, 8) + '...'
+    API_KEY_EXISTS: !!API_CONFIG.API_KEY,
+    API_KEY_LENGTH: API_CONFIG.API_KEY?.length || 0,
+    API_KEY_PREFIX: API_CONFIG.API_KEY?.substring(0, 8) + '...' || 'UNDEFINED',
+    REACT_APP_F1_API_KEY_RAW: process.env.REACT_APP_F1_API_KEY ? 'EXISTS' : 'MISSING'
   });
+
+  // Fail fast if no API key
+  if (!API_CONFIG.API_KEY) {
+    throw new Error('API key is missing! Check GitHub Actions environment variable injection.');
+  }
 
   try {
     const response = await fetch(`${apiUrl}/predict`, {
