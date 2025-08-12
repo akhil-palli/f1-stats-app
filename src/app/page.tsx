@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import type { FC } from 'react';
 import { F1RealDataDashboard } from '@/components/F1RealDataDashboard';
 
-export default function Home(): React.JSX.Element {
+const Home: FC = () => {
   return <F1RealDataDashboard />;
-}
+};
+
+export default Home;
