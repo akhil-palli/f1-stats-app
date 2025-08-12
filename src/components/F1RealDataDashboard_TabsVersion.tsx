@@ -81,7 +81,7 @@ export function F1RealDataDashboard() {
     runBatchPredictions,
     clearPredictions,
     resetPredictor
-  } = useMLPredictor();
+  } = useMLPredictor({ driverStandings, raceResults });
 
   // Handle loading states
   if (isLoading) {
