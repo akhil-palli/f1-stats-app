@@ -215,9 +215,11 @@ function calculateDriverMetrics(
   raceResults: ErgastRaceResult[]
 ) {
   // Get driver's championship standing
-  const driverStanding = driverStandings.find(standing => 
-    `${standing.Driver.givenName} ${standing.Driver.familyName}`.toUpperCase() === driverName.toUpperCase()
-  );
+  const driverStanding = driverStandings.find(standing => {
+    const standingName = `${standing.Driver?.givenName || ''} ${standing.Driver?.familyName || ''}`.trim();
+    return standingName && driverName && 
+           standingName.toUpperCase() === driverName.toUpperCase();
+  });
   
   // Get driver's recent race results (last 3 races)
   const driverRaceResults: number[] = [];
@@ -228,9 +230,11 @@ function calculateDriverMetrics(
   // Look through race results to find this driver's performance
   raceResults.forEach(race => {
     if (race.Results) {
-      const driverResult = race.Results.find(result => 
-        `${result.Driver.givenName} ${result.Driver.familyName}`.toUpperCase() === driverName.toUpperCase()
-      );
+      const driverResult = race.Results.find(result => {
+        const resultName = `${result.Driver?.givenName || ''} ${result.Driver?.familyName || ''}`.trim();
+        return resultName && driverName && 
+               resultName.toUpperCase() === driverName.toUpperCase();
+      });
       
       if (driverResult) {
         totalRaces++;
@@ -293,14 +297,20 @@ function calculateConstructorMetrics(
   raceResults.forEach(race => {
     if (race.Results) {
       race.Results.forEach(result => {
-        if (result.Constructor.name.toLowerCase().includes(constructorName.toLowerCase()) ||
-            constructorName.toLowerCase().includes(result.Constructor.name.toLowerCase())) {
+        // Add null checks before calling toLowerCase()
+        const resultConstructorName = result.Constructor?.name;
+        if (resultConstructorName && typeof resultConstructorName === 'string' && 
+            constructorName && typeof constructorName === 'string') {
           
-          if (result.positionText !== 'R' && result.positionText !== 'D' && 
-              result.positionText !== 'E' && result.positionText !== 'W') {
-            const finishPos = parseInt(result.position);
-            if (!isNaN(finishPos)) {
-              constructorResults.push(finishPos);
+          if (resultConstructorName.toLowerCase().includes(constructorName.toLowerCase()) ||
+              constructorName.toLowerCase().includes(resultConstructorName.toLowerCase())) {
+            
+            if (result.positionText !== 'R' && result.positionText !== 'D' && 
+                result.positionText !== 'E' && result.positionText !== 'W') {
+              const finishPos = parseInt(result.position);
+              if (!isNaN(finishPos)) {
+                constructorResults.push(finishPos);
+              }
             }
           }
         }
