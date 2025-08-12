@@ -52,14 +52,14 @@ export async function makeSecurePrediction(driverData: DriverData): Promise<Pred
         driver: driverData.driver_name,
         constructor: driverData.constructor,
         circuit: driverData.circuit,
-        grid_position: driverData.qualifying_position,
+        grid_position: Number(driverData.qualifying_position),
         season: 2025,
-        championship_position: driverData.championship_position || 15,
-        cumulative_points: driverData.cumulative_points || 0,
-        driver_avg_finish_3: driverData.driver_avg_finish_3 || 12.0,
-        driver_avg_quali_3: driverData.driver_avg_quali_3 || 12.0,
-        constructor_avg_finish_3: driverData.constructor_avg_finish_3 || 12.0,
-        driver_dnf_rate: driverData.driver_dnf_rate || 0.15,
+        championship_position: Number(driverData.championship_position ?? 15),
+        cumulative_points: Number(driverData.cumulative_points ?? 0),
+        driver_avg_finish_3: Number(driverData.driver_avg_finish_3 ?? 12.0),
+        driver_avg_quali_3: Number(driverData.driver_avg_quali_3 ?? 12.0),
+        constructor_avg_finish_3: Number(driverData.constructor_avg_finish_3 ?? 12.0),
+        driver_dnf_rate: Number(driverData.driver_dnf_rate ?? 0.15),
         grid_penalty: 0
       })
     });

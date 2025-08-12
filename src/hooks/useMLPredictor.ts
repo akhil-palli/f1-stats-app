@@ -274,11 +274,11 @@ function calculateDriverMetrics(
   const dnfRate = totalRaces > 0 ? dnfCount / totalRaces : 0.15;
   
   return {
-    championship_position: driverStanding ? parseInt(driverStanding.position) : 15,
-    cumulative_points: driverStanding ? parseFloat(driverStanding.points) : 0,
-    driver_avg_finish_3: avgFinish,
-    driver_avg_quali_3: avgQuali,
-    driver_dnf_rate: dnfRate,
+    championship_position: driverStanding ? Number(driverStanding.position) : 15,
+    cumulative_points: driverStanding ? Number(driverStanding.points) : 0,
+    driver_avg_finish_3: Number(avgFinish),
+    driver_avg_quali_3: Number(avgQuali),
+    driver_dnf_rate: Number(dnfRate),
     totalRaces,
     recentRaces: recentRaceResults.length
   };
@@ -325,7 +325,7 @@ function calculateConstructorMetrics(
     : 12.0;
   
   return {
-    constructor_avg_finish_3: avgFinish,
+    constructor_avg_finish_3: Number(avgFinish),
     sampleSize: recentResults.length
   };
 }
