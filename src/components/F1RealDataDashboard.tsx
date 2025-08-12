@@ -417,7 +417,7 @@ export function F1RealDataDashboard() {
               
               // Fetch individual race results for completed races that might be missing from bulk results
               const currentDate = new Date();
-              const completedRaces = data.MRData.RaceTable.Races.filter(race => {
+              const completedRaces = data.MRData.RaceTable.Races.filter((race: any) => {
                 const raceDate = new Date(race.date);
                 return raceDate < currentDate;
               });
@@ -425,7 +425,7 @@ export function F1RealDataDashboard() {
               setDataStatus(`Loading individual race results... (${completedRaces.length} completed races)`);
               
               // Try to fetch individual results for each completed race
-              const individualResults = [];
+              const individualResults: any[] = [];
               for (const race of completedRaces) {
                 try {
                   const raceResultResponse = await fetch(`https://api.jolpi.ca/ergast/f1/2025/${race.round}/results.json`, {
@@ -450,8 +450,8 @@ export function F1RealDataDashboard() {
                 setRaceResults(prevResults => {
                   const merged = [...prevResults];
                   
-                  individualResults.forEach(newResult => {
-                    const existingIndex = merged.findIndex(r => r.round === newResult.round && r.season === newResult.season);
+                  individualResults.forEach((newResult: any) => {
+                    const existingIndex = merged.findIndex((r: any) => r.round === newResult.round && r.season === newResult.season);
                     if (existingIndex >= 0) {
                       merged[existingIndex] = newResult; // Replace if exists
                     } else {
