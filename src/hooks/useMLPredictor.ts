@@ -400,13 +400,13 @@ export const useMLPredictor = (params: UseMLPredictorParams): UseMLPredictorRetu
             constructor: driver.constructor,
             circuit: driver.circuit || selectedSession.circuit_short_name,
             qualifying_position: driver.qualifying_position,
-            // Real calculated metrics (matching original implementation)
-            championship_position: driverMetrics.championship_position,
-            cumulative_points: driverMetrics.cumulative_points,
-            driver_avg_finish_3: driverMetrics.driver_avg_finish_3,
-            driver_avg_quali_3: driverMetrics.driver_avg_quali_3,
-            constructor_avg_finish_3: constructorMetrics.constructor_avg_finish_3,
-            driver_dnf_rate: driverMetrics.driver_dnf_rate,
+            // Real calculated metrics (ensuring numbers, not strings)
+            championship_position: Number(driverMetrics.championship_position),
+            cumulative_points: Number(driverMetrics.cumulative_points),
+            driver_avg_finish_3: Number(driverMetrics.driver_avg_finish_3),
+            driver_avg_quali_3: Number(driverMetrics.driver_avg_quali_3),
+            constructor_avg_finish_3: Number(constructorMetrics.constructor_avg_finish_3),
+            driver_dnf_rate: Number(driverMetrics.driver_dnf_rate),
           };
 
           console.log(`🔢 Calculated metrics for ${driver.driver_name}:`, {
@@ -469,13 +469,13 @@ export const useMLPredictor = (params: UseMLPredictorParams): UseMLPredictorRetu
             constructor: driver.constructor,
             circuit: driver.circuit || sessions[sessionIndex].circuit_short_name,
             qualifying_position: driver.qualifying_position,
-            // Real calculated metrics
-            championship_position: driverMetrics.championship_position,
-            cumulative_points: driverMetrics.cumulative_points,
-            driver_avg_finish_3: driverMetrics.driver_avg_finish_3,
-            driver_avg_quali_3: driverMetrics.driver_avg_quali_3,
-            constructor_avg_finish_3: constructorMetrics.constructor_avg_finish_3,
-            driver_dnf_rate: driverMetrics.driver_dnf_rate
+            // Real calculated metrics (ensuring numbers, not strings)
+            championship_position: Number(driverMetrics.championship_position),
+            cumulative_points: Number(driverMetrics.cumulative_points),
+            driver_avg_finish_3: Number(driverMetrics.driver_avg_finish_3),
+            driver_avg_quali_3: Number(driverMetrics.driver_avg_quali_3),
+            constructor_avg_finish_3: Number(constructorMetrics.constructor_avg_finish_3),
+            driver_dnf_rate: Number(driverMetrics.driver_dnf_rate)
           });
         });
       });
