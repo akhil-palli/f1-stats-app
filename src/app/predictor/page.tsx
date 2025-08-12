@@ -1,7 +1,8 @@
 'use client';
 
+import React from 'react';
 import { F1RealDataDashboard } from '@/components/F1RealDataDashboard';
 
-export default function PredictorPage() {
+export default function PredictorPage(): React.JSX.Element {
   return <F1RealDataDashboard />;
 }
