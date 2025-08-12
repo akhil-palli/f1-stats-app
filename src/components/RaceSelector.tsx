@@ -33,7 +33,11 @@ export const RaceSelector = memo(function RaceSelector({
            (session.session_type === 'Race' && 
             !session.session_name?.toLowerCase().includes('sprint'));
     
-    return isRaceSession;
+    // Only show completed races (not upcoming)
+    const sessionDate = new Date(session.date_start);
+    const isCompleted = sessionDate < new Date();
+    
+    return isRaceSession && isCompleted;
   });
 
   // Group sessions by year
@@ -47,7 +51,11 @@ export const RaceSelector = memo(function RaceSelector({
   // Only show latest year sessions if available (prefer 2025, but show whatever is most recent)
   const availableYears = Object.keys(sessionsByYear).map(Number).sort((a, b) => b - a);
   const targetYear = availableYears[0]; // Use the most recent year available
-  const displaySessions = sessionsByYear[targetYear] || [];
+  
+  // Sort sessions by date (most recent first) - only completed races
+  const displaySessions = (sessionsByYear[targetYear] || []).sort((a, b) => 
+    new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
+  );
   
   const isUsing2025 = targetYear === 2025;
 
@@ -71,7 +79,6 @@ export const RaceSelector = memo(function RaceSelector({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
           {displaySessions.map((session) => {
             const sessionDate = new Date(session.date_start);
-            const isUpcoming = sessionDate > new Date();
             const isSelected = selectedSession?.session_key === session.session_key;
             
             return (
@@ -94,11 +101,6 @@ export const RaceSelector = memo(function RaceSelector({
                 <div className="text-xs opacity-60 mt-1">
                   {sessionDate.toLocaleDateString()} {sessionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </div>
-                {isUpcoming && (
-                  <div className="text-xs bg-blue-600 px-2 py-1 rounded mt-2 inline-block">
-                    Upcoming
-                  </div>
-                )}
                 {isSelected && !isLoading && (
                   <div className="text-xs bg-green-600 px-2 py-1 rounded mt-2 inline-block">
                     ✓ COMPLETED

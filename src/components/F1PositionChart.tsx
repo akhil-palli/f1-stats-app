@@ -29,6 +29,7 @@ type Session = {
   circuit_short_name: string;
   date_end: string;
   session_type: string;
+  round?: string; // Added for Ergast API compatibility
 };
 
 type PositionResponse = {
@@ -104,42 +105,51 @@ export default function F1PositionChart() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch available sessions
+  // Fetch available races (sessions)
   useEffect(() => {
     async function fetchSessions() {
       try {
-        // Fetch all 2025 F1 sessions (includes practice, qualifying, sprint, and race)
-        const response = await fetch('https://api.openf1.org/v1/sessions?year=2025');
-        if (!response.ok) throw new Error('Failed to fetch sessions');
-        const sessionList = await response.json();
+        // Fetch 2025 F1 race calendar from Jolpica-F1 API
+        const response = await fetch('https://api.jolpi.ca/ergast/f1/2025.json');
+        if (!response.ok) throw new Error('Failed to fetch races');
+        const data = await response.json();
+        const races = data.MRData.RaceTable.Races;
         
-        // Sort sessions by date (most recent first) and take more sessions
-        const sortedSessions = sessionList.sort((a: any, b: any) => 
-          new Date(b.date_start).getTime() - new Date(a.date_start).getTime()
-        );
-        
-        // Transform the data to match our expected format
-        const transformedSessions = sortedSessions.slice(0, 20).map((session: any) => ({
-          session_key: session.session_key,
-          meeting_key: session.meeting_key,
-          session_name: session.session_name,
-          date_start: session.date_start,
-          date_end: session.date_end,
-          location: session.location,
-          country_name: session.country_name,
-          circuit_short_name: session.circuit_short_name,
-          session_type: session.session_type
-        }));
+        // Transform races to session format, including only completed races
+        const currentDate = new Date();
+        const transformedSessions = races
+          .filter((race: any) => {
+            const raceDate = new Date(`${race.date}T${race.time || '00:00:00Z'}`);
+            return raceDate < currentDate; // Only show completed races
+          })
+          .sort((a: any, b: any) => {
+            const dateA = new Date(`${a.date}T${a.time || '00:00:00Z'}`);
+            const dateB = new Date(`${b.date}T${b.time || '00:00:00Z'}`);
+            return dateB.getTime() - dateA.getTime(); // Most recent first
+          })
+          .slice(0, 10) // Show last 10 completed races
+          .map((race: any) => ({
+            session_key: parseInt(race.round), // Use round as session key
+            meeting_key: parseInt(race.round),
+            session_name: `${race.raceName} - Race`,
+            date_start: `${race.date}T${race.time || '00:00:00Z'}`,
+            date_end: `${race.date}T${race.time || '00:00:00Z'}`,
+            location: race.Circuit.Location.locality,
+            country_name: race.Circuit.Location.country,
+            circuit_short_name: race.Circuit.circuitName.replace(' Circuit', '').replace(' Grand Prix Circuit', ''),
+            session_type: 'Race',
+            round: race.round
+          }));
         
         setSessions(transformedSessions);
         
-        // Auto-select the most recent session
+        // Auto-select the most recent completed race
         if (transformedSessions.length > 0) {
           setSelectedSession(transformedSessions[0]);
         }
       } catch (err) {
-        console.error('Error fetching sessions:', err);
-        setError('Failed to load sessions');
+        console.error('Error fetching races:', err);
+        setError('Failed to load race calendar');
       } finally {
         setIsLoadingSessions(false);
       }
@@ -147,7 +157,7 @@ export default function F1PositionChart() {
     fetchSessions();
   }, []);
 
-  // Fetch position data when session changes
+  // Fetch lap-by-lap position data when race changes
   useEffect(() => {
     async function fetchData() {
       if (!selectedSession) return;
@@ -156,128 +166,125 @@ export default function F1PositionChart() {
       setError(null);
       
       try {
-        // Fetch directly from OpenF1 API
-        const url = `https://api.openf1.org/v1/position?session_key=${selectedSession.session_key}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch position data');
+        // Fetch lap data from Jolpica-F1 API (Ergast)
+        // The API limits individual timing records (not laps), so we need pagination
+        let allLaps: any[] = [];
+        let offset = 0;
+        const limit = 100; // Maximum allowed by API (this limits individual timing records)
+        let hasMoreData = true;
         
-        const rawData = await response.json();
-        console.log(`Fetched ${rawData.length} position records`);
-        
-        if (rawData.length === 0) {
-          const sessionDate = new Date(selectedSession.date_start);
-          const isUpcoming = sessionDate > new Date();
+        while (hasMoreData) {
+          const url = `https://api.jolpi.ca/ergast/f1/2025/${selectedSession.round}/laps.json?limit=${limit}&offset=${offset}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Failed to fetch lap data');
           
-          if (isUpcoming) {
-            setError(`This session is scheduled for ${sessionDate.toLocaleDateString()} at ${sessionDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Position data will be available during or after the session.`);
-          } else {
-            setError('No position data available for this session');
-          }
-          return;
+          const data = await response.json();
+          const laps = data.MRData.RaceTable.Races[0]?.Laps || [];
+          const totalRecords = parseInt(data.MRData.total);
+          
+          allLaps = allLaps.concat(laps);
+          
+          // Calculate how many timing records we've fetched
+          const recordsFetched = allLaps.reduce((sum, lap) => sum + lap.Timings.length, 0);
+          
+          console.log(`📥 Fetched ${laps.length} laps with ${recordsFetched} total timing records (offset: ${offset}, total available: ${totalRecords})`);
+          
+          // Check if we've fetched all available data
+          hasMoreData = recordsFetched < totalRecords && laps.length > 0;
+          offset += limit;
+          
+          // Safety break to prevent infinite loops  
+          if (offset > totalRecords * 2) break;
         }
         
-        // Add driver names using our 2025 season mapping
-        const DRIVER_MAP: Record<number, string> = {
-          // 2025 F1 Season Driver Numbers
-          1: 'Max Verstappen',        // Red Bull Racing
-          30: 'Liam Lawson',          // Red Bull Racing
-          4: 'Lando Norris',          // McLaren
-          81: 'Oscar Piastri',        // McLaren
-          16: 'Charles Leclerc',      // Ferrari
-          44: 'Lewis Hamilton',       // Ferrari
-          63: 'George Russell',       // Mercedes
-          12: 'Kimi Antonelli',       // Mercedes
-          14: 'Fernando Alonso',      // Aston Martin
-          18: 'Lance Stroll',         // Aston Martin
-          10: 'Pierre Gasly',         // Alpine
-          7: 'Jack Doohan',           // Alpine
-          23: 'Alex Albon',           // Williams
-          55: 'Carlos Sainz',         // Williams
-          22: 'Yuki Tsunoda',         // RB F1 Team
-          6: 'Isack Hadjar',          // RB F1 Team
-          27: 'Nico Hulkenberg',      // Kick Sauber
-          5: 'Gabriel Bortoleto',     // Kick Sauber
-          31: 'Esteban Ocon',         // Haas
-          87: 'Oliver Bearman',       // Haas
-          
-          // Legacy drivers that might appear in historical data
-          11: 'Sergio Perez',         // Former Red Bull
-          77: 'Valtteri Bottas',      // Former Kick Sauber
-          24: 'Zhou Guanyu',          // Former Kick Sauber
-          2: 'Logan Sargeant',        // Former Williams
-          3: 'Daniel Ricciardo',      // Former RB F1 Team
-          20: 'Kevin Magnussen',      // Former Haas
-          47: 'Mick Schumacher',      // Reserve
-          43: 'Franco Colapinto',     // Former Williams
-          21: 'Nyck de Vries'         // Former
+        console.log(`📊 Race ${selectedSession.round}: Fetched ${allLaps.length} total laps`);
+        
+        if (allLaps.length === 0) {
+          setError('No lap data available for this race');
+          return;
+        }
+
+        // Driver ID to name mapping for Ergast data
+        const DRIVER_ID_MAP: Record<string, string> = {
+          'max_verstappen': 'Max Verstappen',
+          'lawson': 'Liam Lawson', 
+          'norris': 'Lando Norris',
+          'piastri': 'Oscar Piastri',
+          'leclerc': 'Charles Leclerc',
+          'hamilton': 'Lewis Hamilton',
+          'russell': 'George Russell',
+          'antonelli': 'Kimi Antonelli',
+          'alonso': 'Fernando Alonso',
+          'stroll': 'Lance Stroll',
+          'gasly': 'Pierre Gasly',
+          'doohan': 'Jack Doohan',
+          'albon': 'Alex Albon',
+          'sainz': 'Carlos Sainz',
+          'tsunoda': 'Yuki Tsunoda',
+          'hadjar': 'Isack Hadjar',
+          'hulkenberg': 'Nico Hulkenberg',
+          'bortoleto': 'Gabriel Bortoleto',
+          'ocon': 'Esteban Ocon',
+          'bearman': 'Oliver Bearman',
+          // Legacy drivers
+          'perez': 'Sergio Perez',
+          'bottas': 'Valtteri Bottas',
+          'zhou': 'Zhou Guanyu',
+          'sargeant': 'Logan Sargeant',
+          'ricciardo': 'Daniel Ricciardo',
+          'magnussen': 'Kevin Magnussen'
         };
+
+        // Convert lap data to position-over-time format
+        const positionData: ProcessedDriver[] = [];
+        const raceStartTime = new Date(selectedSession.date_start);
         
-        // Process data and add driver names
-        const processedData: ProcessedDriver[] = rawData.map((d: any) => ({
-          date: new Date(d.date),
-          position: d.position,
-          driver_name: DRIVER_MAP[d.driver_number] || `Driver ${d.driver_number}`,
-          driver_number: d.driver_number,
-          driver_id: `${DRIVER_MAP[d.driver_number] || `Driver ${d.driver_number}`}_${d.driver_number}`
-        }));
-        
-        // Get unique drivers
-        const uniqueDrivers = [...new Set(processedData.map(d => d.driver_name))];
-        
-        // Find the latest timestamp across all data
-        const maxDate = new Date(Math.max(...processedData.map(d => d.date.getTime())));
-        
-        // Extend each driver's line to the end with their last known position
-        const extendedData: ProcessedDriver[] = [];
-        const driverLastPositions = new Map<string, { position: number; date: Date }>();
-        
-        // First, collect all original data and find last position for each driver
-        processedData.forEach(d => {
-          extendedData.push(d);
-          const existing = driverLastPositions.get(d.driver_id);
-          if (!existing || d.date.getTime() > existing.date.getTime()) {
-            driverLastPositions.set(d.driver_id, { position: d.position, date: d.date });
-          }
-        });
-        
-        // Add extended points for each driver to the max date (plus 5 minutes buffer)
-        const chartEndTime = new Date(maxDate.getTime() + 5 * 60 * 1000);
-        
-        driverLastPositions.forEach((lastData, driverId) => {
-          const driverInfo = processedData.find(d => d.driver_id === driverId);
-          if (driverInfo && lastData.date.getTime() < chartEndTime.getTime()) {
-            extendedData.push({
-              ...driverInfo,
-              date: chartEndTime,
-              position: lastData.position,
-              driver_id: driverId
+        allLaps.forEach((lap: any, lapIndex: number) => {
+          const lapNumber = parseInt(lap.number);
+          // Estimate realistic time progression: first lap ~120s, subsequent laps ~75s average
+          const estimatedLapTime = lapIndex === 0 ? 120 : 75;
+          const cumulativeTime = lapIndex === 0 ? 120 : 120 + (lapIndex * 75);
+          const lapTime = new Date(raceStartTime.getTime() + cumulativeTime * 1000);
+          
+          lap.Timings.forEach((timing: any) => {
+            const driverName = DRIVER_ID_MAP[timing.driverId] || timing.driverId;
+            const position = parseInt(timing.position);
+            
+            positionData.push({
+              date: lapTime,
+              position: position,
+              driver_name: driverName,
+              driver_number: 0, // Not available in Ergast, but not critical
+              driver_id: timing.driverId
             });
-          }
+          });
         });
+
+        // Get unique drivers
+        const uniqueDrivers = [...new Set(positionData.map(d => d.driver_name))];
         
-        // Sort by date for proper line rendering
-        extendedData.sort((a, b) => a.date.getTime() - b.date.getTime());
+        console.log(`📈 Processed ${positionData.length} position records from ${allLaps.length} laps for ${uniqueDrivers.length} drivers`);
         
-        console.log(`Extended data: ${processedData.length} -> ${extendedData.length} records`);
-        setData(extendedData);
+        // Sort data by date for proper chart rendering
+        positionData.sort((a, b) => a.date.getTime() - b.date.getTime());
+        
+        setData(positionData);
         setSessionInfo({
           session_key: selectedSession.session_key,
           meeting_key: selectedSession.meeting_key,
-          total_records: rawData.length,
+          total_records: positionData.length,
           drivers: uniqueDrivers
         });
         
       } catch (err) {
-        setError('Error fetching position data');
-        console.error(err);
+        console.error('Error fetching lap data:', err);
+        setError('Failed to load position data');
       } finally {
         setIsLoading(false);
       }
     }
     
-    if (selectedSession) {
-      fetchData();
-    }
+    fetchData();
   }, [selectedSession]);
 
   if (isLoadingSessions) return (

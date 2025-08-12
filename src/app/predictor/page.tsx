@@ -1,7 +1,7 @@
 'use client';
 
-import { F1MLPredictorDashboard } from '@/components/F1MLPredictorDashboard';
+import { F1RealDataDashboard } from '@/components/F1RealDataDashboard';
 
 export default function PredictorPage() {
-  return <F1MLPredictorDashboard />;
+  return <F1RealDataDashboard />;
 }
