@@ -189,6 +189,7 @@ export function F1RealDataDashboard() {
   const [driverStandings, setDriverStandings] = useState<ErgastDriverStanding[]>([])
   const [constructorStandings, setConstructorStandings] = useState<ErgastConstructorStanding[]>([])
   const [raceResults, setRaceResults] = useState<ErgastRaceResult[]>([])
+  const [raceCalendar, setRaceCalendar] = useState<ErgastRaceResult[]>([])
   const [actualRaceResults, setActualRaceResults] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dataStatus, setDataStatus] = useState<string>("Loading...")
@@ -400,138 +401,76 @@ export function F1RealDataDashboard() {
           }
         }
 
+        // Fetch 2025 race calendar for season status calculation
+        setDataStatus("Loading race calendar...")
+        try {
+          const calendarResponse = await fetch('https://api.jolpi.ca/ergast/f1/2025.json', {
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json',
+            }
+          });
+          if (calendarResponse.ok) {
+            const data = await calendarResponse.json();
+            if (data.MRData.RaceTable.Races.length > 0) {
+              setRaceCalendar(data.MRData.RaceTable.Races);
+              
+              // Fetch individual race results for completed races that might be missing from bulk results
+              const currentDate = new Date();
+              const completedRaces = data.MRData.RaceTable.Races.filter(race => {
+                const raceDate = new Date(race.date);
+                return raceDate < currentDate;
+              });
+              
+              setDataStatus(`Loading individual race results... (${completedRaces.length} completed races)`);
+              
+              // Try to fetch individual results for each completed race
+              const individualResults = [];
+              for (const race of completedRaces) {
+                try {
+                  const raceResultResponse = await fetch(`https://api.jolpi.ca/ergast/f1/2025/${race.round}/results.json`, {
+                    mode: 'cors',
+                    headers: {
+                      'Accept': 'application/json',
+                    }
+                  });
+                  if (raceResultResponse.ok) {
+                    const raceData = await raceResultResponse.json();
+                    if (raceData.MRData.RaceTable.Races.length > 0) {
+                      individualResults.push(raceData.MRData.RaceTable.Races[0]);
+                    }
+                  }
+                } catch (e) {
+                  console.log(`Failed to fetch results for round ${race.round}:`, e);
+                }
+              }
+              
+              // Merge individual results with existing results
+              if (individualResults.length > 0) {
+                setRaceResults(prevResults => {
+                  const merged = [...prevResults];
+                  
+                  individualResults.forEach(newResult => {
+                    const existingIndex = merged.findIndex(r => r.round === newResult.round && r.season === newResult.season);
+                    if (existingIndex >= 0) {
+                      merged[existingIndex] = newResult; // Replace if exists
+                    } else {
+                      merged.push(newResult); // Add if new
+                    }
+                  });
+                  
+                  console.log(`Updated race results: ${merged.length} total, ${individualResults.length} individual results added`);
+                  return merged;
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch race calendar:", e);
+        }
+
         setDataStatus("Data loaded successfully!");
 
-        // Add most recent race results if APIs are outdated (manual update based on Formula1.com)
-        const currentDate = new Date();
-        const latestApiRace = raceResults.length > 0 ? new Date(raceResults[raceResults.length - 1].date) : null;
-        
-        // If latest API race is older than July 2025, add recent races manually
-        if (!latestApiRace || latestApiRace < new Date('2025-07-01')) {
-          console.log("Adding latest race results from Formula1.com...");
-          const recentRaces: ErgastRaceResult[] = [
-            {
-              season: "2025",
-              round: "13",
-              url: "",
-              raceName: "Belgian Grand Prix",
-              Circuit: {
-                circuitId: "spa",
-                url: "",
-                circuitName: "Circuit de Spa-Francorchamps",
-                Location: { 
-                  lat: "50.4372",
-                  long: "5.9714",
-                  locality: "Spa", 
-                  country: "Belgium" 
-                }
-              },
-              date: "2025-07-27T12:00:00",
-              Results: [{
-                number: "81",
-                position: "1",
-                positionText: "1",
-                points: "25",
-                Driver: { 
-                  driverId: "piastri",
-                  permanentNumber: "81",
-                  code: "PIA",
-                  givenName: "Oscar", 
-                  familyName: "Piastri"
-                },
-                Constructor: { 
-                  constructorId: "mclaren",
-                  name: "McLaren" 
-                },
-                grid: "1",
-                laps: "44",
-                status: "Finished"
-              }]
-            },
-            {
-              season: "2025", 
-              round: "12",
-              url: "",
-              raceName: "British Grand Prix",
-              Circuit: {
-                circuitId: "silverstone",
-                url: "",
-                circuitName: "Silverstone Circuit",
-                Location: { 
-                  lat: "52.0786",
-                  long: "-1.0169",
-                  locality: "Silverstone", 
-                  country: "UK" 
-                }
-              },
-              date: "2025-07-06T12:00:00",
-              Results: [{
-                number: "4",
-                position: "1",
-                positionText: "1",
-                points: "25",
-                Driver: { 
-                  driverId: "norris",
-                  permanentNumber: "4",
-                  code: "NOR",
-                  givenName: "Lando", 
-                  familyName: "Norris"
-                },
-                Constructor: { 
-                  constructorId: "mclaren",
-                  name: "McLaren" 
-                },
-                grid: "1",
-                laps: "52",
-                status: "Finished"
-              }]
-            },
-            {
-              season: "2025",
-              round: "11", 
-              url: "",
-              raceName: "Austrian Grand Prix",
-              Circuit: {
-                circuitId: "red_bull_ring",
-                url: "",
-                circuitName: "Red Bull Ring",
-                Location: { 
-                  lat: "47.2197",
-                  long: "14.7647",
-                  locality: "Spielberg", 
-                  country: "Austria" 
-                }
-              },
-              date: "2025-06-29T12:00:00",
-              Results: [{
-                number: "4",
-                position: "1",
-                positionText: "1",
-                points: "25",
-                Driver: { 
-                  driverId: "norris",
-                  permanentNumber: "4",
-                  code: "NOR",
-                  givenName: "Lando", 
-                  familyName: "Norris"
-                },
-                Constructor: { 
-                  constructorId: "mclaren",
-                  name: "McLaren" 
-                },
-                grid: "1",
-                laps: "71",
-                status: "Finished"
-              }]
-            }
-          ];
-          
-          // Add recent races to the existing results
-          setRaceResults(prev => [...prev, ...recentRaces]);
-          setDataStatus("Data loaded with latest race updates!");
-        } else {
-          setDataStatus("Data loaded successfully!");
-        }
       } catch (err) {
         console.error('Error fetching F1 data:', err);
         setDataStatus("Failed to load F1 data");
@@ -543,6 +482,91 @@ export function F1RealDataDashboard() {
     fetchAllData();
   }, []);
 
+  // Get actual race results for the selected session using OpenF1 position API (same as charts)
+  const getActualRaceResults = async () => {
+    if (!selectedPredictorSession) return null;
+    
+    try {
+      console.log('🏁 Fetching REAL race results from OpenF1 position API...');
+      
+      // First validate that this is actually 2025 data
+      const sessionDate = new Date(selectedPredictorSession.date_start);
+      const sessionYear = sessionDate.getFullYear();
+      
+      if (sessionYear !== 2025) {
+        console.log(`❌ Session is from ${sessionYear}, not 2025. Showing no data.`);
+        return null;
+      }
+      
+      // Use the same OpenF1 position API that works for your charts
+      const positionUrl = `https://api.openf1.org/v1/position?session_key=${selectedPredictorSession.session_key}`;
+      const response = await fetch(positionUrl);
+      
+      if (!response.ok) {
+        console.log(`Failed to fetch position data: ${response.status}`);
+        return null;
+      }
+      
+      const positionData = await response.json();
+      console.log(`📊 Found ${positionData.length} position records for session ${selectedPredictorSession.session_key}`);
+      
+      if (positionData.length === 0) {
+        console.log('No position data available for this session');
+        return null;
+      }
+      
+      // Get final positions (latest timestamp for each driver)
+      const finalPositions = new Map();
+      
+      positionData.forEach((pos: any) => {
+        const driverKey = pos.driver_number;
+        const currentEntry = finalPositions.get(driverKey);
+        
+        if (!currentEntry || new Date(pos.date) > new Date(currentEntry.date)) {
+          finalPositions.set(driverKey, pos);
+        }
+      });
+      
+      // Validate we have current 2025 F1 drivers (including rookies)
+      const current2025Drivers = [1, 4, 5, 6, 10, 11, 12, 14, 16, 18, 22, 23, 27, 30, 31, 43, 44, 55, 63, 77, 81, 87]; // All 2025 driver numbers including rookies
+      const foundDriverNumbers = Array.from(finalPositions.keys());
+      const has2025Drivers = current2025Drivers.some(num => foundDriverNumbers.includes(num));
+      
+      if (!has2025Drivers) {
+        console.log(`❌ No current 2025 F1 drivers found - this appears to be old data.`);
+        return null;
+      }
+      
+      // Convert to race results format and sort by final position
+      const raceResults = Array.from(finalPositions.values())
+        .filter((pos: any) => pos.position && pos.position > 0)
+        .sort((a: any, b: any) => a.position - b.position)
+        .map((pos: any, index: number) => ({
+          position: pos.position.toString(),
+          Driver: {
+            familyName: getDriverName(pos.driver_number).split(' ').pop() || 'Unknown',
+            givenName: getDriverName(pos.driver_number).split(' ').slice(0, -1).join(' ') || 'Unknown'
+          },
+          driver_number: pos.driver_number,
+          final_position: pos.position
+        }));
+      
+      console.log(`✅ Found final race positions for ${raceResults.length} drivers (2025 season)`);
+      
+      return {
+        Results: raceResults,
+        raceName: `${selectedPredictorSession.location} Grand Prix`,
+        season: new Date(selectedPredictorSession.date_start).getFullYear().toString(),
+        date: selectedPredictorSession.date_start,
+        session_key: selectedPredictorSession.session_key
+      };
+      
+    } catch (error) {
+      console.error('Failed to fetch real race results:', error);
+      return null;
+    }
+  };
+
   // Fetch actual race results when session and predictions change
   useEffect(() => {
     if (selectedPredictorSession && predictions.length > 0) {
@@ -553,7 +577,31 @@ export function F1RealDataDashboard() {
   const renderDashboard = () => {
     const leader = driverStandings[0];
     const constructorLeader = constructorStandings[0];
-    const completedRaces = raceResults.filter(race => race.Results && race.Results.length > 0);
+    
+    // Calculate completed races based on current date and race calendar
+    const currentDate = new Date();
+    const currentRaces = raceCalendar.length > 0 ? raceCalendar : [];
+    
+    // Count races that have already happened (race date is before current date)
+    const completedRaces = currentRaces.filter(race => {
+      const raceDate = new Date(race.date);
+      return raceDate < currentDate;
+    });
+    
+    const totalRaces = currentRaces.length || 24; // Default to 24 if calendar not loaded
+    
+    // Calculate season status
+    const seasonStart = currentRaces.length > 0 ? new Date(currentRaces[0].date) : new Date('2025-03-16');
+    const seasonEnd = currentRaces.length > 0 ? new Date(currentRaces[currentRaces.length - 1].date) : new Date('2025-12-07');
+    
+    let seasonStatus = "2025 Active";
+    if (currentDate < seasonStart) {
+      seasonStatus = "2025 Pre-Season";
+    } else if (currentDate > seasonEnd) {
+      seasonStatus = "2025 Completed";
+    } else if (completedRaces.length === totalRaces) {
+      seasonStatus = "2025 Completed";
+    }
     
     return (
       <div className="space-y-8">
@@ -562,7 +610,7 @@ export function F1RealDataDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <Badge variant="outline" className="bg-blue-600 w-fit">LIVE DATA</Badge>
             <span className="text-xs sm:text-sm">
-              Championships from Jolpica-F1 API • Latest races from Formula1.com • Sessions from OpenF1 API • {dataStatus}
+              Championships from Jolpica-F1 API • Race calendar & results • Sessions from OpenF1 API • {dataStatus}
             </span>
           </div>
         </div>
@@ -590,7 +638,7 @@ export function F1RealDataDashboard() {
               <Calendar className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-lg md:text-2xl font-bold">2025 Active</div>
+              <div className="text-lg md:text-2xl font-bold">{seasonStatus}</div>
               <p className="text-xs text-gray-400">Formula 1 World Championship</p>
             </CardContent>
           </Card>
@@ -601,7 +649,7 @@ export function F1RealDataDashboard() {
               <Flag className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-lg md:text-2xl font-bold">{completedRaces.length}/24</div>
+              <div className="text-lg md:text-2xl font-bold">{completedRaces.length}/{totalRaces}</div>
               <p className="text-xs text-gray-400">2025 Season</p>
             </CardContent>
           </Card>
@@ -657,7 +705,8 @@ export function F1RealDataDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3 md:space-y-4">
-                {completedRaces
+                {raceResults
+                  .filter(race => race.Results && race.Results.length > 0) // Only races with results
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date, newest first
                   .slice(0, 5) // Take first 5 (most recent)
                   .map((race) => {
@@ -822,67 +871,109 @@ export function F1RealDataDashboard() {
     </div>
   );
 
-  const renderRaces = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Race Results & Calendar
-          </CardTitle>
-          <CardDescription>
-            Real race results from Jolpica-F1 API + latest from Formula1.com • Live session data from OpenF1
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            {raceResults
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date, newest first
-              .map((race) => {
-              const winner = race.Results?.[0];
-              const hasResults = race.Results && race.Results.length > 0;
-              
-              return (
-                <div
-                  key={`${race.season}-${race.round}`}
-                  className="flex items-center justify-between p-4 border border-gray-700 rounded-lg hover:bg-gray-800/50 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center min-w-[60px]">
-                      <div className="text-lg font-bold">R{race.round}</div>
-                      <Badge variant={hasResults ? "default" : "secondary"} className="text-xs">
-                        {hasResults ? "Completed" : "Scheduled"}
-                      </Badge>
-                    </div>
-                    <Separator orientation="vertical" className="h-12" />
-                    <div>
-                      <h3 className="font-semibold text-lg">{race.raceName}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <MapPin className="h-4 w-4" />
-                        {race.Circuit.Location.locality}, {race.Circuit.Location.country}
+  const renderRaces = () => {
+    // Merge race calendar with results to show complete season view
+    const mergedRaces = raceCalendar.map(calendarRace => {
+      // Find matching race result
+      const raceResult = raceResults.find(result => 
+        result.round === calendarRace.round && result.season === calendarRace.season
+      );
+      
+      // Return calendar race with results if available
+      return {
+        ...calendarRace,
+        Results: raceResult?.Results || null
+      };
+    });
+
+    const currentDate = new Date();
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Race Results & Calendar
+            </CardTitle>
+            <CardDescription>
+              Complete 2025 F1 season calendar with results • Race calendar from Jolpica-F1 API • Live session data from OpenF1
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {mergedRaces
+                .sort((a, b) => parseInt(b.round) - parseInt(a.round)) // Sort by round number, newest first
+                .map((race) => {
+                const winner = race.Results?.[0];
+                const hasResults = race.Results && race.Results.length > 0;
+                const raceDate = new Date(race.date);
+                const hasHappened = raceDate < currentDate;
+                const isUpcoming = !hasHappened;
+                
+                return (
+                  <div
+                    key={`${race.season}-${race.round}`}
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between border border-gray-700 rounded-lg hover:bg-gray-800/50 transition-colors ${
+                      isUpcoming ? 'p-2 bg-gray-900/30' : 'p-4'
+                    } gap-3 sm:gap-0`}
+                  >
+                    <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                      <div className={`text-center flex-shrink-0 ${isUpcoming ? 'min-w-[40px]' : 'min-w-[60px]'}`}>
+                        <div className={`font-bold ${isUpcoming ? 'text-sm' : 'text-lg'}`}>R{race.round}</div>
+                        <Badge 
+                          variant={(!isUpcoming && hasHappened) ? "default" : isUpcoming ? "outline" : "default"} 
+                          className={isUpcoming ? "text-xs px-1" : "text-xs"}
+                        >
+                          {hasResults ? "Completed" : isUpcoming ? "Upcoming" : "Completed"}
+                        </Badge>
                       </div>
-                      <p className="text-sm text-gray-400">{new Date(race.date).toLocaleDateString()}</p>
+                      <Separator orientation="vertical" className={`${isUpcoming ? "h-8" : "h-12"} hidden sm:block`} />
+                      <div className="min-w-0 flex-1">
+                        <h3 className={`font-semibold ${isUpcoming ? 'text-sm' : 'text-lg'} truncate`}>{race.raceName}</h3>
+                        <div className={`flex items-center gap-2 text-gray-400 ${isUpcoming ? 'text-xs' : 'text-sm'}`}>
+                          <MapPin className={`${isUpcoming ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
+                          <span className="truncate">{race.Circuit.Location.locality}, {race.Circuit.Location.country}</span>
+                        </div>
+                        <p className={`text-gray-400 ${isUpcoming ? 'text-xs' : 'text-sm'}`}>
+                          {raceDate.toLocaleDateString('en-US', { 
+                            weekday: isUpcoming ? undefined : 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </div>
                     </div>
+                    {(winner || (!isUpcoming && hasHappened)) && (
+                      <div className="text-right flex-shrink-0 sm:ml-4">
+                        {winner ? (
+                          <>
+                            <div className={`flex items-center gap-2 justify-end ${isUpcoming ? 'text-sm' : ''}`}>
+                              <Trophy className={`text-yellow-600 ${isUpcoming ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
+                              <span className="font-medium truncate">
+                                {winner.Driver.givenName} {winner.Driver.familyName}
+                              </span>
+                            </div>
+                            <p className={`text-gray-400 ${isUpcoming ? 'text-xs' : 'text-xs'} truncate`}>
+                              {winner.Constructor.name}
+                            </p>
+                          </>
+                        ) : hasHappened ? (
+                          <div className={`text-gray-400 ${isUpcoming ? 'text-xs' : 'text-sm'}`}>
+                            Results pending
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
-                  {winner && (
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-4 w-4 text-yellow-600" />
-                        <span className="font-medium">
-                          {winner.Driver.givenName} {winner.Driver.familyName}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-400">{winner.Constructor.name}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   // ML Predictor functions - Use real qualifying data from OpenF1
   const fetchQualifyingDataForSession = useCallback(async (session: Session) => {
@@ -1098,91 +1189,6 @@ export function F1RealDataDashboard() {
       return () => clearTimeout(timer);
     }
   }, [selectedPredictorSession?.session_key, qualifyingData.length]); // Use session_key to detect race changes
-
-  // Get actual race results for the selected session using OpenF1 position API (same as charts)
-  const getActualRaceResults = async () => {
-    if (!selectedPredictorSession) return null;
-    
-    try {
-      console.log('🏁 Fetching REAL race results from OpenF1 position API...');
-      
-      // First validate that this is actually 2025 data
-      const sessionDate = new Date(selectedPredictorSession.date_start);
-      const sessionYear = sessionDate.getFullYear();
-      
-      if (sessionYear !== 2025) {
-        console.log(`❌ Session is from ${sessionYear}, not 2025. Showing no data.`);
-        return null;
-      }
-      
-      // Use the same OpenF1 position API that works for your charts
-      const positionUrl = `https://api.openf1.org/v1/position?session_key=${selectedPredictorSession.session_key}`;
-      const response = await fetch(positionUrl);
-      
-      if (!response.ok) {
-        console.log(`Failed to fetch position data: ${response.status}`);
-        return null;
-      }
-      
-      const positionData = await response.json();
-      console.log(`📊 Found ${positionData.length} position records for session ${selectedPredictorSession.session_key}`);
-      
-      if (positionData.length === 0) {
-        console.log('No position data available for this session');
-        return null;
-      }
-      
-      // Get final positions (latest timestamp for each driver)
-      const finalPositions = new Map();
-      
-      positionData.forEach((pos: any) => {
-        const driverKey = pos.driver_number;
-        const currentEntry = finalPositions.get(driverKey);
-        
-        if (!currentEntry || new Date(pos.date) > new Date(currentEntry.date)) {
-          finalPositions.set(driverKey, pos);
-        }
-      });
-      
-      // Validate we have current 2025 F1 drivers (including rookies)
-      const current2025Drivers = [1, 4, 5, 6, 10, 11, 12, 14, 16, 18, 22, 23, 27, 30, 31, 43, 44, 55, 63, 77, 81, 87]; // All 2025 driver numbers including rookies
-      const foundDriverNumbers = Array.from(finalPositions.keys());
-      const has2025Drivers = current2025Drivers.some(num => foundDriverNumbers.includes(num));
-      
-      if (!has2025Drivers) {
-        console.log(`❌ No current 2025 F1 drivers found - this appears to be old data.`);
-        return null;
-      }
-      
-      // Convert to race results format and sort by final position
-      const raceResults = Array.from(finalPositions.values())
-        .filter((pos: any) => pos.position && pos.position > 0)
-        .sort((a: any, b: any) => a.position - b.position)
-        .map((pos: any, index: number) => ({
-          position: pos.position.toString(),
-          Driver: {
-            familyName: getDriverName(pos.driver_number).split(' ').pop() || 'Unknown',
-            givenName: getDriverName(pos.driver_number).split(' ').slice(0, -1).join(' ') || 'Unknown'
-          },
-          driver_number: pos.driver_number,
-          final_position: pos.position
-        }));
-      
-      console.log(`✅ Found final race positions for ${raceResults.length} drivers (2025 season)`);
-      
-      return {
-        Results: raceResults,
-        raceName: `${selectedPredictorSession.location} Grand Prix`,
-        season: new Date(selectedPredictorSession.date_start).getFullYear().toString(),
-        date: selectedPredictorSession.date_start,
-        session_key: selectedPredictorSession.session_key
-      };
-      
-    } catch (error) {
-      console.error('Failed to fetch real race results:', error);
-      return null;
-    }
-  };
 
   // Helper function to get driver name from driver number (using real driver data from API)
   const getDriverName = (driverNumber: number): string => {
